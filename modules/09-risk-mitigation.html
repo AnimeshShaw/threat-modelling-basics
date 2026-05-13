@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>M9: Risk Scoring & Mitigation — Threat Modeling Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../css/styles.css" />
+<style>
+.dread-meter { display:flex; height:12px; border-radius:6px; overflow:hidden; margin:6px 0; }
+.dread-fill { transition:width .4s ease; }
+.control-card { background:white; border:1px solid var(--gray-200); border-radius:var(--radius); padding:16px 20px; margin-bottom:10px; display:flex; align-items:flex-start; gap:14px; border-left:4px solid; }
+.control-card.prevent { border-left-color: var(--success); }
+.control-card.detect { border-left-color: var(--primary); }
+.control-card.respond { border-left-color: var(--warning); }
+.control-card.recover { border-left-color: var(--accent); }
+.control-type { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; margin-bottom:4px; }
+.control-card.prevent .control-type { color:var(--success); }
+.control-card.detect .control-type { color:var(--primary); }
+.control-card.respond .control-type { color:var(--warning); }
+.control-card.recover .control-type { color:var(--accent); }
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo"><div class="logo-icon">🛡️</div><span>Threat Modeling<small>Teaching Guide</small></span></div>
+  <div class="progress-bar-wrap"><div class="progress-label"><span>Progress</span><span id="progress-pct">0%</span></div><div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div></div>
+  <nav class="sidebar-nav">
+    <div class="nav-section"><div class="nav-section-title">Home</div><a class="nav-item" href="../index.html"><span class="nav-icon">🏠</span>Course Overview</a></div>
+    <div class="nav-section">
+      <div class="nav-section-title">Part 1 — Foundations</div>
+      <a class="nav-item" href="01-introduction.html"><span class="nav-icon">🌱</span>What is Threat Modeling?<span class="nav-badge">M1</span></a>
+      <a class="nav-item" href="02-core-concepts.html"><span class="nav-icon">🔑</span>Core Concepts<span class="nav-badge">M2</span></a>
+      <a class="nav-item" href="03-stride.html"><span class="nav-icon">⚡</span>STRIDE Framework<span class="nav-badge">M3</span></a>
+      <a class="nav-item" href="04-process.html"><span class="nav-icon">🔄</span>The TM Process<span class="nav-badge">M4</span></a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Part 2 — Application TM</div>
+      <a class="nav-item" href="05-basic-apps.html"><span class="nav-icon">💻</span>Basic Applications<span class="nav-badge">M5</span></a>
+      <a class="nav-item" href="06-web-apps.html"><span class="nav-icon">🌐</span>Web Applications<span class="nav-badge">M6</span></a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Part 3 — Modern Architectures</div>
+      <a class="nav-item" href="07-cloud.html"><span class="nav-icon">☁️</span>Cloud Architecture<span class="nav-badge">M7</span></a>
+      <a class="nav-item" href="08-agentic.html"><span class="nav-icon">🤖</span>AI Agentic Systems<span class="nav-badge">M8</span></a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Part 4 — Advanced</div>
+      <a class="nav-item active" href="09-risk-mitigation.html"><span class="nav-icon">🛡️</span>Risk & Mitigation<span class="nav-badge">M9</span></a>
+      <a class="nav-item" href="10-capstone.html"><span class="nav-icon">🏆</span>Capstone Exercise<span class="nav-badge">M10</span></a>
+    </div>
+  </nav>
+  <div class="sidebar-footer">Threat Modeling Guide · v1.0</div>
+</aside>
+
+<div class="main-wrap">
+  <header class="top-bar">
+    <button class="hamburger" id="hamburger">☰</button>
+    <span class="top-bar-title">Module 9 — Risk Scoring & Mitigation</span>
+    <div class="top-bar-actions">
+      <span class="live-badge" id="live-badge" style="display:none"><span class="live-dot"></span> LIVE</span>
+      <button class="btn btn-present" id="btn-present">🎬 Present</button>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="page-header">
+      <div class="module-tag green">🛡️ Module 9 · Advanced</div>
+      <h1 class="page-title">Risk Scoring & Mitigation Strategy</h1>
+      <p class="page-subtitle">Finding threats is only half the job. This module covers how to rigorously score, prioritize, and mitigate them — using DREAD, CVSS basics, risk matrices, and a security controls catalogue.</p>
+    </div>
+
+    <div class="objectives-card">
+      <h3>🎯 Learning Objectives</h3>
+      <ul>
+        <li>Apply the DREAD scoring model to quantify threat risk</li>
+        <li>Understand CVSS basics and when to use it</li>
+        <li>Build and use a risk matrix for prioritization decisions</li>
+        <li>Select appropriate security controls from each category (preventive, detective, responsive)</li>
+        <li>Document residual risk and make explicit accept/transfer decisions</li>
+      </ul>
+    </div>
+
+    <!-- Section 1 — Why Score? -->
+    <div class="section" data-title="Why Risk Scoring Matters">
+      <h2 class="section-title"><span class="section-num">1</span>Why Risk Scoring Matters</h2>
+      <p>A typical threat model for a real system will produce 20–100+ threats. You can't fix all of them before launch. Risk scoring gives you a <strong>defensible, consistent basis for prioritization</strong> — so you fix the most important things first and document why.</p>
+
+      <div class="callout warning">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-body">
+          <div class="callout-title">Without a scoring system…</div>
+          <div class="callout-text">Prioritization becomes political — whoever shouts loudest gets their threat fixed. Or gut feeling drives decisions. Neither is defensible to a CISO, auditor, or regulator. Scoring makes security decisions transparent and consistent.</div>
+        </div>
+      </div>
+
+      <div class="card-grid">
+        <div class="card primary">
+          <div class="card-icon">🎯</div>
+          <div class="card-title">DREAD</div>
+          <div class="card-desc">Simple threat-focused scoring. Good for quick team workshops. 5 dimensions, 1–10 scale per dimension.</div>
+        </div>
+        <div class="card accent">
+          <div class="card-icon">📊</div>
+          <div class="card-title">CVSS</div>
+          <div class="card-desc">Vulnerability-focused standard used by NVD and security researchers. More complex but universally understood.</div>
+        </div>
+        <div class="card success">
+          <div class="card-icon">🟥</div>
+          <div class="card-title">Risk Matrix</div>
+          <div class="card-desc">Visual Likelihood × Impact grid. Fast, intuitive, great for stakeholder communication and teaching.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2 — DREAD -->
+    <div class="section" data-title="DREAD Scoring Model">
+      <h2 class="section-title"><span class="section-num">2</span>DREAD Scoring Model</h2>
+      <p>DREAD scores a threat across five dimensions on a 1–3 scale (or 1–10 for more precision). The total score determines priority. Microsoft originally created this alongside STRIDE.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Letter</th><th>Dimension</th><th>Question to Ask</th><th>Score 1</th><th>Score 2</th><th>Score 3</th></tr></thead>
+          <tbody>
+            <tr><td><strong>D</strong></td><td>Damage</td><td>How bad is the impact if exploited?</td><td>Minimal (log spam)</td><td>Individual user harmed</td><td>All users, financial loss, data breach</td></tr>
+            <tr><td><strong>R</strong></td><td>Reproducibility</td><td>How easy is it to reproduce the attack?</td><td>Very hard, needs exact timing</td><td>Authenticated attacker</td><td>Any internet user, always works</td></tr>
+            <tr><td><strong>E</strong></td><td>Exploitability</td><td>How much skill/effort is needed?</td><td>Needs expert + custom tools</td><td>Some programming skill needed</td><td>No skill, public exploit exists</td></tr>
+            <tr><td><strong>A</strong></td><td>Affected Users</td><td>How many users are impacted?</td><td>One user</td><td>Some users (subset)</td><td>All users / anonymous</td></tr>
+            <tr><td><strong>D</strong></td><td>Discoverability</td><td>How easy to find the vulnerability?</td><td>Very obscure</td><td>Requires source code access</td><td>Visible in browser / public info</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="subsection">DREAD in Action — Scoring Three Threats</h3>
+
+      <div class="diagram-wrap">
+        <div class="diagram-title">DREAD Score Visualization</div>
+        <div style="padding: 12px 0;">
+          <!-- Threat 1 -->
+          <div style="margin-bottom:20px">
+            <div style="font-size:13px; font-weight:700; color:var(--gray-900); margin-bottom:8px">T-01: SQL Injection via search field</div>
+            <div style="display:grid; grid-template-columns: 120px 1fr 40px; gap:8px; align-items:center; font-size:12px">
+              <span style="color:var(--gray-600)">Damage (3)</span>
+              <div class="dread-meter"><div class="dread-fill" style="width:100%;background:#dc2626"></div></div>
+              <span style="font-weight:700;color:#dc2626">3/3</span>
+              <span style="color:var(--gray-600)">Reproducibility (3)</span>
+              <div class="dread-meter"><div class="dread-fill" style="width:100%;background:#dc2626"></div></div>
+              <span style="font-weight:700;color:#dc2626">3/3</span>
+              <span style="color:var(--gray-600)">Exploitability (3)</span>
+              <div class="dread-meter"><div class="dread-fill" style="width:100%;background:#dc2626"></div></div>
+              <span style="font-weight:700;color:#dc2626">3/3</span>
+              <span style="color:var(--gray-600)">Affected Users (3)</span>
+              <div class="dread-meter"><div class="dread-fill" style="width:100%;background:#dc2626"></div></div>
+              <span style="font-weight:700;color:#dc2626">3/3</span>
+              <span style="color:var(--gray-600)">Discoverability (2)</span>
+              <div class="dread-meter"><div class="dread-fill" style="width:66%;background:#f97316"></div></div>
+              <span style="font-weight:700;color:#f97316">2/3</span>
+            </div>
+            <div style="margin-top:8px; padding:8px 14px; background:#fee2e2; border-radius:6px; font-size:13px; font-weight:700; color:#dc2626">Total: 14/15 → 🚨 CRITICAL — Fix immediately</div>
+          </div>
+
+          <!-- Threat 2 -->
+          <div style="margin-bottom:20px">
+            <div style="font-size:13px; font-weight:700; color:var(--gray-900); margin-bottom:8px">T-02: Rate limit missing on password reset</div>
+            <div style="display:grid; grid-template-columns: 120px 1fr 40px; gap:8px; align-items:center; font-size:12px">
+              <span style="color:var(--gray-600)">Damage (2)</span>
+              <div class="dread-meter"><div class="dread-fill" style="width:66%;background:#f97316"></div></div>
+              <span style="font-weight:700;color:#f97316">2/3</span>
+              <span style="color:var(--gray-600)">Reproducibility (3)</span>
+              <div class="dread-meter"><div class="dread-fill" style="width:100%;background:#dc2626"></div></div>
+              <span style="font-weight:700;color:#dc2626">3/3</span>
+              <span style="color:var(--gray-600)">Exploitability (3)</span>
+              <div class="dread-meter"><div class="dread-fill" style="width:100%;background:#dc2626"></div></div>
+              <span style="font-weight:700;color:#dc2626">3/3</span>
+              <span style="color:var(--gray-600)">Affected Users (2)</span>
+              <div class="dread-meter"><div class="dread-fill" style="width:66%;background:#f97316"></div></div>
+              <span style="font-weight:700;color:#f97316">2/3</span>
+              <span style="color:var(--gray-600)">Discoverability (3)</span>
+              <div class="dread-meter"><div class="dread-fill" style="width:100%;background:#dc2626"></div></div>
+              <span style="font-weight:700;color:#dc2626">3/3</span>
+            </div>
+            <div style="margin-top:8px; padding:8px 14px; background:#fff7ed; border-radius:6px; font-size:13px; font-weight:700; color:#c2410c">Total: 13/15 → 🔴 HIGH — Next sprint</div>
+          </div>
+
+          <!-- Threat 3 -->
+          <div>
+            <div style="font-size:13px; font-weight:700; color:var(--gray-900); margin-bottom:8px">T-03: Verbose error messages in dev only</div>
+            <div style="display:grid; grid-template-columns: 120px 1fr 40px; gap:8px; align-items:center; font-size:12px">
+              <span style="color:var(--gray-600)">Damage (1)</span>
+              <div class="dread-meter"><div class="dread-fill" style="width:33%;background:#22c55e"></div></div>
+              <span style="font-weight:700;color:#22c55e">1/3</span>
+              <span style="color:var(--gray-600)">Reproducibility (1)</span>
+              <div class="dread-meter"><div class="dread-fill" style="width:33%;background:#22c55e"></div></div>
+              <span style="font-weight:700;color:#22c55e">1/3</span>
+              <span style="color:var(--gray-600)">Exploitability (2)</span>
+              <div class="dread-meter"><div class="dread-fill" style="width:66%;background:#f97316"></div></div>
+              <span style="font-weight:700;color:#f97316">2/3</span>
+              <span style="color:var(--gray-600)">Affected Users (1)</span>
+              <div class="dread-meter"><div class="dread-fill" style="width:33%;background:#22c55e"></div></div>
+              <span style="font-weight:700;color:#22c55e">1/3</span>
+              <span style="color:var(--gray-600)">Discoverability (1)</span>
+              <div class="dread-meter"><div class="dread-fill" style="width:33%;background:#22c55e"></div></div>
+              <span style="font-weight:700;color:#22c55e">1/3</span>
+            </div>
+            <div style="margin-top:8px; padding:8px 14px; background:#f0fdf4; border-radius:6px; font-size:13px; font-weight:700; color:#15803d">Total: 6/15 → ✅ LOW — Document & monitor</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3 — CVSS -->
+    <div class="section" data-title="CVSS Basics">
+      <h2 class="section-title"><span class="section-num">3</span>CVSS Basics</h2>
+      <p>The <strong>Common Vulnerability Scoring System (CVSS)</strong> is the industry standard for rating publicly-disclosed vulnerabilities. It's used by the NVD (National Vulnerability Database), CVE entries, and vendor security advisories.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>CVSS Metric Group</th><th>What It Measures</th><th>Key Factors</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Base Score</strong></td><td>Intrinsic characteristics of the vulnerability</td><td>Attack Vector (Network/Local), Complexity, Privileges Required, User Interaction, CIA Impact</td></tr>
+            <tr><td><strong>Temporal Score</strong></td><td>How the risk changes over time</td><td>Exploit code maturity, Remediation level, Report confidence</td></tr>
+            <tr><td><strong>Environmental Score</strong></td><td>How the vulnerability applies to your specific environment</td><td>Your mitigations, modified CIA impact based on asset sensitivity</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card-grid" style="margin-top:16px">
+        <div class="card success"><div class="card-title" style="font-size:24px;font-weight:900;color:#15803d">0.0–3.9</div><div class="card-desc">Low severity</div></div>
+        <div class="card warning"><div class="card-title" style="font-size:24px;font-weight:900;color:#b45309">4.0–6.9</div><div class="card-desc">Medium severity</div></div>
+        <div class="card danger"><div class="card-title" style="font-size:24px;font-weight:900;color:#dc2626">7.0–8.9</div><div class="card-desc">High severity</div></div>
+        <div class="card" style="border-top:3px solid #7f1d1d"><div class="card-title" style="font-size:24px;font-weight:900;color:#7f1d1d">9.0–10.0</div><div class="card-desc">Critical severity</div></div>
+      </div>
+
+      <div class="callout tip">
+        <div class="callout-icon">💡</div>
+        <div class="callout-body"><div class="callout-title">DREAD vs CVSS — When to Use Each</div><div class="callout-text"><strong>Use DREAD</strong> in team threat modeling workshops — it's fast, collaborative, and doesn't require deep security expertise. <br><strong>Use CVSS</strong> when communicating with the broader security community, filing CVEs, or patching known vulnerabilities from the NVD. CVSS Base Score is standardized and tool-supported.</div></div>
+      </div>
+    </div>
+
+    <!-- Section 4 — Security Controls Catalogue -->
+    <div class="section" data-title="Security Controls Catalogue">
+      <h2 class="section-title"><span class="section-num">4</span>Security Controls Catalogue</h2>
+      <p>Security controls are organized by <strong>when they act</strong> in the attack lifecycle. A mature security posture has all four types:</p>
+
+      <div class="control-card prevent">
+        <div style="font-size:22px;flex-shrink:0">🚧</div>
+        <div>
+          <div class="control-type">Preventive</div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:4px">Stop the attack from succeeding</div>
+          <div style="font-size:13px;color:var(--gray-600)">MFA, encryption, input validation, WAF rules, firewall policies, access controls (RBAC), parameterized queries, HTTPS enforcement</div>
+        </div>
+      </div>
+      <div class="control-card detect">
+        <div style="font-size:22px;flex-shrink:0">🔍</div>
+        <div>
+          <div class="control-type">Detective</div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:4px">Identify attacks that are happening or have happened</div>
+          <div style="font-size:13px;color:var(--gray-600)">SIEM/logging, anomaly detection, intrusion detection (IDS), GuardDuty, Canary tokens, honeypots, audit trails, alerting on threshold breaches</div>
+        </div>
+      </div>
+      <div class="control-card respond">
+        <div style="font-size:22px;flex-shrink:0">⚡</div>
+        <div>
+          <div class="control-type">Responsive</div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:4px">Contain and limit damage when an attack succeeds</div>
+          <div style="font-size:13px;color:var(--gray-600)">Incident response playbooks, automatic session revocation, account lockout, WAF block rules, circuit breakers, kill switches, feature flags</div>
+        </div>
+      </div>
+      <div class="control-card recover">
+        <div style="font-size:22px;flex-shrink:0">🔄</div>
+        <div>
+          <div class="control-type">Restorative</div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:4px">Restore normal operation after an incident</div>
+          <div style="font-size:13px;color:var(--gray-600)">Tested backups, disaster recovery runbooks, blue/green deployments, rollback capabilities, post-incident reviews, customer communication plans</div>
+        </div>
+      </div>
+
+      <div class="callout info" style="margin-top:20px">
+        <div class="callout-icon">💡</div>
+        <div class="callout-body"><div class="callout-title">Defense in Depth — Layer All Four</div><div class="callout-text">Preventive controls fail. Detective controls miss things. Assume breach — even well-defended systems get compromised. Having all four layers means: when prevention fails, you detect it; when you detect it, you can respond; when you respond, you recover. This is why auditors and frameworks (ISO 27001, SOC 2, NIST) require all four categories.</div></div>
+      </div>
+    </div>
+
+    <!-- Section 5 — Mitigation Decision Framework -->
+    <div class="section" data-title="Mitigation Decision Framework">
+      <h2 class="section-title"><span class="section-num">5</span>Mitigation Decision Framework</h2>
+      <p>For each threat, you make one of four decisions. The risk score guides which decision is appropriate:</p>
+
+      <div class="diagram-wrap">
+        <div class="diagram-title">Mitigation Decision Tree</div>
+        <svg viewBox="0 0 680 340" width="100%" style="max-width:680px">
+          <defs>
+            <marker id="dt" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+              <polygon points="0 0, 8 3, 0 6" fill="#374151"/>
+            </marker>
+          </defs>
+          <!-- Start -->
+          <rect x="250" y="10" width="180" height="44" rx="8" fill="#1f2937" />
+          <text x="340" y="36" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="700" fill="white">Threat Identified</text>
+
+          <line x1="340" y1="54" x2="340" y2="80" stroke="#374151" stroke-width="1.5" marker-end="url(#dt)"/>
+
+          <!-- Q1: Can we eliminate? -->
+          <rect x="210" y="80" width="260" height="44" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+          <text x="340" y="107" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="700" fill="#1d4ed8">Can we remove the risky feature?</text>
+
+          <!-- Yes → Eliminate -->
+          <line x1="340" y1="124" x2="340" y2="155" stroke="#374151" stroke-width="1.5" marker-end="url(#dt)"/>
+          <text x="350" y="144" font-family="Inter,sans-serif" font-size="10" fill="#16a34a" font-weight="700">YES</text>
+          <rect x="255" y="155" width="170" height="44" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+          <text x="340" y="182" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="700" fill="#15803d">🚫 ELIMINATE</text>
+
+          <!-- No → Q2 -->
+          <line x1="210" y1="102" x2="100" y2="102" stroke="#374151" stroke-width="1.5" marker-end="url(#dt)"/>
+          <text x="148" y="94" font-family="Inter,sans-serif" font-size="10" fill="#dc2626" font-weight="700">NO</text>
+          <rect x="20" y="80" width="170" height="44" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+          <text x="105" y="100" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#1d4ed8">Can a 3rd party own</text>
+          <text x="105" y="116" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#1d4ed8">this risk?</text>
+
+          <!-- Yes → Transfer -->
+          <line x1="105" y1="124" x2="105" y2="155" stroke="#374151" stroke-width="1.5" marker-end="url(#dt)"/>
+          <text x="115" y="144" font-family="Inter,sans-serif" font-size="10" fill="#16a34a" font-weight="700">YES</text>
+          <rect x="20" y="155" width="170" height="44" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+          <text x="105" y="182" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="700" fill="#1d4ed8">🔄 TRANSFER</text>
+
+          <!-- No → Q3 -->
+          <line x1="470" y1="102" x2="560" y2="102" stroke="#374151" stroke-width="1.5" marker-end="url(#dt)"/>
+          <text x="508" y="94" font-family="Inter,sans-serif" font-size="10" fill="#dc2626" font-weight="700">ALSO NO</text>
+          <rect x="490" y="80" width="180" height="44" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+          <text x="580" y="100" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#1d4ed8">Is risk below</text>
+          <text x="580" y="116" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#1d4ed8">tolerance threshold?</text>
+
+          <!-- Yes → Accept -->
+          <line x1="580" y1="124" x2="580" y2="155" stroke="#374151" stroke-width="1.5" marker-end="url(#dt)"/>
+          <text x="590" y="144" font-family="Inter,sans-serif" font-size="10" fill="#16a34a" font-weight="700">YES</text>
+          <rect x="495" y="155" width="170" height="44" rx="8" fill="#fef9c3" stroke="#f59e0b" stroke-width="1.5"/>
+          <text x="580" y="178" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="700" fill="#b45309">📋 ACCEPT</text>
+          <text x="580" y="192" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#92400e">(must document!)</text>
+
+          <!-- No → Mitigate -->
+          <line x1="580" y1="224" x2="580" y2="260" stroke="#374151" stroke-width="1.5" marker-end="url(#dt)"/>
+          <text x="590" y="246" font-family="Inter,sans-serif" font-size="10" fill="#dc2626" font-weight="700">NO</text>
+          <rect x="495" y="260" width="170" height="44" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+          <text x="580" y="287" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="700" fill="#15803d">🔧 MITIGATE</text>
+
+          <!-- Residual risk -->
+          <line x1="340" y1="224" x2="340" y2="260" stroke="#374151" stroke-width="1.5" marker-end="url(#dt)"/>
+          <rect x="230" y="260" width="220" height="44" rx="8" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1.5"/>
+          <text x="340" y="280" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="700" fill="#374151">Document Residual Risk</text>
+          <text x="340" y="296" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#6b7280">What risk remains after mitigation?</text>
+
+          <!-- Bottom legend -->
+          <text x="340" y="325" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#9ca3af">All decisions must be documented — "Accepted implicitly" is not an option</text>
+        </svg>
+        <div class="diagram-caption">Every threat gets a documented decision: Eliminate, Transfer, Accept, or Mitigate. Undocumented acceptance is the same as negligence.</div>
+      </div>
+    </div>
+
+    <!-- Section 6 — Residual Risk -->
+    <div class="section" data-title="Residual Risk">
+      <h2 class="section-title"><span class="section-num">6</span>Residual Risk & Documentation</h2>
+      <p><strong>Residual risk</strong> is the risk that remains after you've applied your mitigations. No control is perfect — mitigations reduce risk, not eliminate it. Documenting residual risk is as important as the threat table itself.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Threat ID</th><th>Original Risk</th><th>Mitigation Applied</th><th>Residual Risk</th><th>Decision</th><th>Owner</th><th>Review Date</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>T-01</td>
+              <td><span class="badge badge-red">Critical</span></td>
+              <td>MFA enforced, bcrypt hashing, rate limiting</td>
+              <td><span class="badge badge-green">Low</span></td>
+              <td>Accept residual</td>
+              <td>Backend Lead</td>
+              <td>Q2 2025</td>
+            </tr>
+            <tr>
+              <td>T-04</td>
+              <td><span class="badge badge-red">Critical</span></td>
+              <td>Ownership check added to all queries</td>
+              <td><span class="badge badge-green">Very Low</span></td>
+              <td>Accept residual</td>
+              <td>Backend Lead</td>
+              <td>Q2 2025</td>
+            </tr>
+            <tr>
+              <td>T-07</td>
+              <td><span class="badge badge-orange">High</span></td>
+              <td>DB bound to localhost; firewall rule applied</td>
+              <td><span class="badge badge-green">Low</span></td>
+              <td>Accept residual</td>
+              <td>Infra Lead</td>
+              <td>Q2 2025</td>
+            </tr>
+            <tr>
+              <td>T-DDoS</td>
+              <td><span class="badge badge-orange">High</span></td>
+              <td>Rate limiting + CloudFront WAF — 95% of attack traffic blocked</td>
+              <td><span class="badge badge-orange">Medium</span></td>
+              <td><strong>Transfer</strong> — DDoS insurance + CloudFront contract</td>
+              <td>CISO</td>
+              <td>Annual</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout info">
+        <div class="callout-icon">📋</div>
+        <div class="callout-body"><div class="callout-title">What Goes in the Residual Risk Register</div><div class="callout-text">The residual risk register is a living document that serves as your security compliance evidence. It shows: (1) you thought systematically about threats, (2) you made conscious decisions, (3) someone owns each decision, (4) it gets reviewed on a schedule. Auditors love it. Courts appreciate it. Your future self will thank you when re-evaluating assumptions.</div></div>
+      </div>
+    </div>
+
+    <!-- Section 7 — Threat Modeling Checklist -->
+    <div class="section" data-title="TM Checklist">
+      <h2 class="section-title"><span class="section-num">7</span>Threat Model Quality Checklist</h2>
+      <p>Before declaring a threat model complete, run through this checklist:</p>
+
+      <ul class="checklist">
+        <li><div class="check-box">✓</div>All trust boundaries are identified and drawn on the DFD</li>
+        <li><div class="check-box">✓</div>All data flows are labeled with the type of data they carry</li>
+        <li><div class="check-box">✓</div>Every element has been evaluated against all applicable STRIDE categories</li>
+        <li><div class="check-box">✓</div>Every threat has a unique ID and written description</li>
+        <li><div class="check-box">✓</div>Every threat has a risk score (DREAD or equivalent)</li>
+        <li><div class="check-box">✓</div>Every threat has an explicit mitigation decision (Mitigate/Transfer/Eliminate/Accept)</li>
+        <li><div class="check-box">✓</div>All "Accept" decisions are documented with rationale and owner</li>
+        <li><div class="check-box">✓</div>Residual risk is documented for each threat</li>
+        <li><div class="check-box">✓</div>Mitigations have been assigned to specific engineers with target dates</li>
+        <li><div class="check-box">✓</div>A review date is set for the threat model to be revisited</li>
+        <li><div class="check-box">✓</div>The threat model document is stored where the team can find it</li>
+      </ul>
+    </div>
+
+    <!-- Exercise -->
+    <div class="section" data-title="Knowledge Check">
+      <h2 class="section-title"><span class="section-num">8</span>Knowledge Check</h2>
+
+      <div class="exercise-card"
+           data-correct="D"
+           data-feedback-correct="Correct! An 'Accept' decision is valid when the risk is below tolerance — but it MUST be documented explicitly with rationale and an owner. Implicit acceptance (ignoring the threat) is not acceptable because it leaves no audit trail and no one accountable."
+           data-feedback-wrong="Think about what makes 'Accept' different from just ignoring a threat. What's the key requirement that makes accepting a risk legitimate?">
+        <div class="exercise-label">✏️ Exercise 9.1</div>
+        <div class="exercise-title">When is "Accept" a valid mitigation decision?</div>
+        <div class="exercise-text">Your team identifies a low-risk threat (DREAD score: 4/15) and decides not to implement any control for it. Which statement correctly describes this decision?</div>
+        <div class="exercise-options">
+          <button class="option-btn" data-value="A"><span class="opt-letter">A</span>This is always wrong — every threat must have a technical control</button>
+          <button class="option-btn" data-value="B"><span class="opt-letter">B</span>This is fine — low-risk threats can be safely ignored without documentation</button>
+          <button class="option-btn" data-value="C"><span class="opt-letter">C</span>The threat should be transferred to insurance instead of accepted</button>
+          <button class="option-btn" data-value="D"><span class="opt-letter">D</span>"Accept" is valid but must be explicitly documented with rationale, owner, and review date</button>
+        </div>
+        <div class="exercise-feedback"></div>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="section" data-title="Summary">
+      <h2 class="section-title"><span class="section-num">9</span>Module Summary</h2>
+      <div class="callout success">
+        <div class="callout-icon">✅</div>
+        <div class="callout-body">
+          <div class="callout-title">Key Takeaways</div>
+          <div class="callout-text">
+            <ul class="styled" style="margin-top:8px">
+              <li><strong>DREAD</strong>: score Damage, Reproducibility, Exploitability, Affected Users, Discoverability (1–3 per dimension)</li>
+              <li><strong>CVSS</strong>: industry standard for known CVEs; Base Score 0–10 (Critical ≥ 9.0)</li>
+              <li><strong>Controls</strong>: layer Preventive + Detective + Responsive + Restorative</li>
+              <li><strong>Decisions</strong>: every threat gets Mitigate, Transfer, Eliminate, or Accept — never implicit</li>
+              <li><strong>Residual risk</strong>: document what risk remains after mitigation; assign owner and review date</li>
+              <li>A threat model is only complete when it has a <strong>quality-checked, documented residual risk register</strong></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-nav">
+      <a class="page-nav-link" href="08-agentic.html"><span class="nav-dir">← Back</span>AI Agentic Systems</a>
+      <a class="page-nav-link" href="10-capstone.html"><span class="nav-dir">Next →</span>Capstone Exercise</a>
+    </div>
+  </main>
+</div>
+
+<div class="present-toolbar">
+  <button id="prev-slide">◀</button>
+  <span class="slide-counter" id="slide-counter">1 / 9</span>
+  <button id="next-slide">▶</button>
+  <div class="divider"></div>
+  <button id="exit-present">✕</button>
+</div>
+
+<script src="../js/app.js"></script>
+</body>
+</html>

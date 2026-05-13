@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Threat Modeling Guide — From Basics to Intermediate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/styles.css" />
+<style>
+  .hero {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+    color: white; padding: 80px 48px;
+    position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .hero-content { position: relative; z-index: 1; max-width: 700px; }
+  .hero-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
+    padding: 6px 14px; border-radius: 20px;
+    font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    color: #a5b4fc; margin-bottom: 20px;
+  }
+  .hero h1 {
+    font-size: 52px; font-weight: 900; line-height: 1.1;
+    letter-spacing: -.03em; margin-bottom: 18px;
+    background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero p { font-size: 18px; color: rgba(255,255,255,.7); line-height: 1.7; margin-bottom: 32px; }
+  .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+  .hero-btn-primary {
+    background: #4f46e5; color: white; padding: 14px 28px;
+    border-radius: 10px; font-size: 15px; font-weight: 700;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+    transition: all .2s;
+  }
+  .hero-btn-primary:hover { background: #4338ca; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(79,70,229,.4); }
+  .hero-btn-secondary {
+    background: rgba(255,255,255,.1); color: white; padding: 14px 28px;
+    border: 1px solid rgba(255,255,255,.2); border-radius: 10px;
+    font-size: 15px; font-weight: 600; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 8px; transition: all .2s;
+  }
+  .hero-btn-secondary:hover { background: rgba(255,255,255,.2); }
+  .hero-stats {
+    display: flex; gap: 32px; margin-top: 40px;
+    padding-top: 32px; border-top: 1px solid rgba(255,255,255,.15);
+    flex-wrap: wrap;
+  }
+  .hero-stat-num { font-size: 28px; font-weight: 800; color: white; }
+  .hero-stat-label { font-size: 12px; color: rgba(255,255,255,.5); text-transform: uppercase; letter-spacing: .06em; margin-top: 2px; }
+
+  .module-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 18px; padding: 40px 48px;
+  }
+  .module-card {
+    background: white; border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg); padding: 26px;
+    text-decoration: none; color: inherit;
+    transition: var(--transition); display: flex; flex-direction: column;
+    position: relative; overflow: hidden;
+  }
+  .module-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 4px;
+  }
+  .module-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-3px); }
+  .module-card-num { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--gray-400); margin-bottom: 10px; }
+  .module-card-icon { font-size: 36px; margin-bottom: 14px; }
+  .module-card-title { font-size: 17px; font-weight: 700; color: var(--gray-900); margin-bottom: 8px; }
+  .module-card-desc { font-size: 13px; color: var(--gray-500); line-height: 1.6; flex: 1; }
+  .module-card-meta { display: flex; gap: 12px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--gray-100); }
+  .module-card-tag { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 10px; }
+  .tag-beginner { background: #dcfce7; color: #166534; }
+  .tag-intermediate { background: #fef9c3; color: #713f12; }
+  .tag-advanced { background: #fce7f3; color: #9d174d; }
+  .tag-mins { background: var(--gray-100); color: var(--gray-600); }
+
+  .m1::before { background: linear-gradient(90deg, #2563eb, #7c3aed); }
+  .m2::before { background: linear-gradient(90deg, #7c3aed, #db2777); }
+  .m3::before { background: linear-gradient(90deg, #059669, #0284c7); }
+  .m4::before { background: linear-gradient(90deg, #d97706, #dc2626); }
+  .m5::before { background: linear-gradient(90deg, #0891b2, #059669); }
+  .m6::before { background: linear-gradient(90deg, #7c3aed, #0891b2); }
+  .m7::before { background: linear-gradient(90deg, #dc2626, #d97706); }
+  .m8::before { background: linear-gradient(90deg, #4f46e5, #7c3aed); }
+  .m9::before { background: linear-gradient(90deg, #059669, #d97706); }
+  .m10::before { background: linear-gradient(90deg, #0f172a, #4f46e5); }
+
+  .section-divider { padding: 12px 48px 8px; }
+  .section-divider h2 { font-size: 13px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--gray-400); padding-bottom: 10px; border-bottom: 1px solid var(--gray-200); }
+
+  @media(max-width:768px) {
+    .hero { padding: 48px 24px; }
+    .hero h1 { font-size: 34px; }
+    .module-grid { padding: 24px 20px; gap: 14px; }
+    .section-divider { padding: 12px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">🛡️</div>
+    <span>Threat Modeling<small>Teaching Guide</small></span>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-label"><span>Your progress</span><span id="progress-pct">0%</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-title">Home</div>
+      <a class="nav-item active" href="index.html"><span class="nav-icon">🏠</span>Course Overview</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Part 1 — Foundations</div>
+      <a class="nav-item" href="modules/01-introduction.html"><span class="nav-icon">🌱</span>What is Threat Modeling?<span class="nav-badge">M1</span></a>
+      <a class="nav-item" href="modules/02-core-concepts.html"><span class="nav-icon">🔑</span>Core Concepts<span class="nav-badge">M2</span></a>
+      <a class="nav-item" href="modules/03-stride.html"><span class="nav-icon">⚡</span>STRIDE Framework<span class="nav-badge">M3</span></a>
+      <a class="nav-item" href="modules/04-process.html"><span class="nav-icon">🔄</span>The TM Process<span class="nav-badge">M4</span></a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Part 2 — Application TM</div>
+      <a class="nav-item" href="modules/05-basic-apps.html"><span class="nav-icon">💻</span>Basic Applications<span class="nav-badge">M5</span></a>
+      <a class="nav-item" href="modules/06-web-apps.html"><span class="nav-icon">🌐</span>Web Applications<span class="nav-badge">M6</span></a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Part 3 — Modern Architectures</div>
+      <a class="nav-item" href="modules/07-cloud.html"><span class="nav-icon">☁️</span>Cloud Architecture<span class="nav-badge">M7</span></a>
+      <a class="nav-item" href="modules/08-agentic.html"><span class="nav-icon">🤖</span>AI Agentic Systems<span class="nav-badge">M8</span></a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Part 4 — Advanced</div>
+      <a class="nav-item" href="modules/09-risk-mitigation.html"><span class="nav-icon">🛡️</span>Risk & Mitigation<span class="nav-badge">M9</span></a>
+      <a class="nav-item" href="modules/10-capstone.html"><span class="nav-icon">🏆</span>Capstone Exercise<span class="nav-badge">M10</span></a>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    Threat Modeling Guide · v1.0<br>
+    For teaching & self-study
+  </div>
+</aside>
+
+<!-- Main -->
+<div class="main-wrap">
+  <header class="top-bar">
+    <button class="hamburger" id="hamburger">☰</button>
+    <span class="top-bar-title">🛡️ Threat Modeling — Teaching Guide</span>
+    <div class="top-bar-actions">
+      <span class="live-badge" id="live-badge" style="display:none"><span class="live-dot"></span> LIVE</span>
+      <a class="btn btn-ghost" href="modules/01-introduction.html">Start Course →</a>
+      <button class="btn btn-present" id="btn-present">🎬 Present</button>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <div class="hero section" data-title="Welcome">
+    <div class="hero-content">
+      <div class="hero-eyebrow">🛡️ Security Education · 10 Modules</div>
+      <h1>Learn Threat Modeling from the Ground Up</h1>
+      <p>A complete teaching guide covering threat modeling fundamentals through cloud and AI agentic systems. Built for instructors teaching live sessions and students studying independently.</p>
+      <div class="hero-actions">
+        <a class="hero-btn-primary" href="modules/01-introduction.html">🚀 Start Learning</a>
+        <a class="hero-btn-secondary" href="#modules">📚 Browse Modules</a>
+      </div>
+      <div class="hero-stats">
+        <div><div class="hero-stat-num">10</div><div class="hero-stat-label">Modules</div></div>
+        <div><div class="hero-stat-num">6+</div><div class="hero-stat-label">Architecture Types</div></div>
+        <div><div class="hero-stat-num">30+</div><div class="hero-stat-label">Diagrams</div></div>
+        <div><div class="hero-stat-num">20+</div><div class="hero-stat-label">Exercises</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- What You'll Learn -->
+  <div class="section" id="overview" style="padding: 40px 48px 0; max-width:900px" data-title="What You'll Learn">
+    <h2 class="section-title"><span class="section-num">?</span>What Is This Guide?</h2>
+    <p>Threat modeling is the practice of <strong>systematically identifying, analyzing, and mitigating security threats</strong> before they become real attacks. This guide teaches you how to do it — from a blank whiteboard to production-grade architectures.</p>
+    <div class="card-grid" style="margin-top:24px">
+      <div class="card primary animate-in">
+        <div class="card-icon">🎯</div>
+        <div class="card-title">Structured Learning</div>
+        <div class="card-desc">10 progressive modules from basics to advanced, each building on the last</div>
+      </div>
+      <div class="card accent animate-in">
+        <div class="card-icon">🎬</div>
+        <div class="card-title">Live Teaching Mode</div>
+        <div class="card-desc">Press "Present" on any page for a clean slide-by-slide classroom view</div>
+      </div>
+      <div class="card success animate-in">
+        <div class="card-icon">🏗️</div>
+        <div class="card-title">Real Architectures</div>
+        <div class="card-desc">Covers web apps, APIs, microservices, cloud (AWS/GCP/Azure), and AI agents</div>
+      </div>
+      <div class="card warning animate-in">
+        <div class="card-icon">✏️</div>
+        <div class="card-title">Interactive Exercises</div>
+        <div class="card-desc">Quizzes, threat identification tasks, and a full capstone project</div>
+      </div>
+    </div>
+
+    <div class="callout info" style="margin-top:28px">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <div class="callout-title">How to Use This Guide</div>
+        <div class="callout-text">Follow the modules in order for self-study. For live teaching, use the 🎬 <strong>Present</strong> button on any page to enter fullscreen presentation mode — navigate slides with arrow keys or the on-screen controls.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modules -->
+  <div id="modules">
+    <div class="section-divider"><h2>Part 1 — Foundations</h2></div>
+    <div class="module-grid">
+      <a class="module-card m1" href="modules/01-introduction.html">
+        <div class="module-card-num">Module 01</div>
+        <div class="module-card-icon">🌱</div>
+        <div class="module-card-title">What is Threat Modeling?</div>
+        <div class="module-card-desc">The "why" behind threat modeling, its history, and how it fits in the security development lifecycle (SDL).</div>
+        <div class="module-card-meta">
+          <span class="module-card-tag tag-beginner">Beginner</span>
+          <span class="module-card-tag tag-mins">~20 min</span>
+        </div>
+      </a>
+      <a class="module-card m2" href="modules/02-core-concepts.html">
+        <div class="module-card-num">Module 02</div>
+        <div class="module-card-icon">🔑</div>
+        <div class="module-card-title">Core Concepts</div>
+        <div class="module-card-desc">Assets, threats, vulnerabilities, risk, attack surfaces — the vocabulary every threat modeler must know.</div>
+        <div class="module-card-meta">
+          <span class="module-card-tag tag-beginner">Beginner</span>
+          <span class="module-card-tag tag-mins">~25 min</span>
+        </div>
+      </a>
+      <a class="module-card m3" href="modules/03-stride.html">
+        <div class="module-card-num">Module 03</div>
+        <div class="module-card-icon">⚡</div>
+        <div class="module-card-title">STRIDE Framework</div>
+        <div class="module-card-desc">The most widely-used threat categorization framework — Spoofing, Tampering, Repudiation, Info Disclosure, DoS, Elevation of Privilege.</div>
+        <div class="module-card-meta">
+          <span class="module-card-tag tag-beginner">Beginner</span>
+          <span class="module-card-tag tag-mins">~30 min</span>
+        </div>
+      </a>
+      <a class="module-card m4" href="modules/04-process.html">
+        <div class="module-card-num">Module 04</div>
+        <div class="module-card-icon">🔄</div>
+        <div class="module-card-title">The Threat Modeling Process</div>
+        <div class="module-card-desc">Step-by-step walkthrough: scope, data flow diagrams (DFDs), threat enumeration, risk scoring, and mitigation planning.</div>
+        <div class="module-card-meta">
+          <span class="module-card-tag tag-beginner">Beginner</span>
+          <span class="module-card-tag tag-mins">~35 min</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="section-divider"><h2>Part 2 — Application Threat Modeling</h2></div>
+    <div class="module-grid">
+      <a class="module-card m5" href="modules/05-basic-apps.html">
+        <div class="module-card-num">Module 05</div>
+        <div class="module-card-icon">💻</div>
+        <div class="module-card-title">Basic Applications</div>
+        <div class="module-card-desc">Threat model a simple login/CRUD app end to end. Authentication, session management, database access.</div>
+        <div class="module-card-meta">
+          <span class="module-card-tag tag-beginner">Beginner</span>
+          <span class="module-card-tag tag-mins">~40 min</span>
+        </div>
+      </a>
+      <a class="module-card m6" href="modules/06-web-apps.html">
+        <div class="module-card-num">Module 06</div>
+        <div class="module-card-icon">🌐</div>
+        <div class="module-card-title">Web Applications & APIs</div>
+        <div class="module-card-desc">Multi-tier web apps, REST APIs, OAuth 2.0 flows, OWASP Top 10 mapping, and microservices threats.</div>
+        <div class="module-card-meta">
+          <span class="module-card-tag tag-intermediate">Intermediate</span>
+          <span class="module-card-tag tag-mins">~45 min</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="section-divider"><h2>Part 3 — Modern Architectures</h2></div>
+    <div class="module-grid">
+      <a class="module-card m7" href="modules/07-cloud.html">
+        <div class="module-card-num">Module 07</div>
+        <div class="module-card-icon">☁️</div>
+        <div class="module-card-title">Cloud Architecture</div>
+        <div class="module-card-desc">Shared responsibility, IAM threats, data at rest/transit, containers, serverless, cloud-native attack patterns.</div>
+        <div class="module-card-meta">
+          <span class="module-card-tag tag-intermediate">Intermediate</span>
+          <span class="module-card-tag tag-mins">~50 min</span>
+        </div>
+      </a>
+      <a class="module-card m8" href="modules/08-agentic.html">
+        <div class="module-card-num">Module 08</div>
+        <div class="module-card-icon">🤖</div>
+        <div class="module-card-title">AI & Agentic Systems</div>
+        <div class="module-card-desc">LLM-based agents, prompt injection, tool misuse, multi-agent orchestration threats, and AI supply chain risks.</div>
+        <div class="module-card-meta">
+          <span class="module-card-tag tag-intermediate">Intermediate</span>
+          <span class="module-card-tag tag-mins">~50 min</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="section-divider"><h2>Part 4 — Advanced Topics</h2></div>
+    <div class="module-grid">
+      <a class="module-card m9" href="modules/09-risk-mitigation.html">
+        <div class="module-card-num">Module 09</div>
+        <div class="module-card-icon">🛡️</div>
+        <div class="module-card-title">Risk Scoring & Mitigation</div>
+        <div class="module-card-desc">DREAD, CVSS basics, risk matrices, mitigation strategies, security controls catalogue, and residual risk.</div>
+        <div class="module-card-meta">
+          <span class="module-card-tag tag-intermediate">Intermediate</span>
+          <span class="module-card-tag tag-mins">~40 min</span>
+        </div>
+      </a>
+      <a class="module-card m10" href="modules/10-capstone.html">
+        <div class="module-card-num">Module 10</div>
+        <div class="module-card-icon">🏆</div>
+        <div class="module-card-title">Capstone Exercise</div>
+        <div class="module-card-desc">Full end-to-end threat model a real-world fintech application combining cloud, APIs, and AI agents. Instructor-guided.</div>
+        <div class="module-card-meta">
+          <span class="module-card-tag tag-intermediate">Intermediate</span>
+          <span class="module-card-tag tag-mins">~60 min</span>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Presenter toolbar -->
+  <div class="present-toolbar">
+    <button id="prev-slide" title="Previous">◀</button>
+    <span class="slide-counter" id="slide-counter">1 / 3</span>
+    <button id="next-slide" title="Next">▶</button>
+    <div class="divider"></div>
+    <button id="exit-present" title="Exit Presentation">✕</button>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>

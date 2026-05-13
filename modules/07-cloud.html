@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>M7: Cloud Architecture — Threat Modeling Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../css/styles.css" />
+<style>
+.shared-resp { display:grid; grid-template-columns:1fr 1fr; gap:0; border-radius:var(--radius-lg); overflow:hidden; border:1px solid var(--gray-200); margin:24px 0; }
+.shared-col { padding:20px 24px; }
+.shared-col h4 { font-size:13px; font-weight:700; margin-bottom:12px; padding-bottom:8px; border-bottom:2px solid; }
+.shared-col.cloud { background:#f0fdf4; }
+.shared-col.cloud h4 { color:#15803d; border-color:#22c55e; }
+.shared-col.you { background:#fef9c3; }
+.shared-col.you h4 { color:#b45309; border-color:#f59e0b; }
+.shared-col ul { list-style:none; }
+.shared-col ul li { font-size:13px; padding:4px 0; color:var(--gray-700); display:flex; align-items:flex-start; gap:8px; }
+.shared-col ul li::before { content:'✓'; font-weight:700; flex-shrink:0; }
+.shared-col.cloud ul li::before { color:#16a34a; }
+.shared-col.you ul li::before { color:#d97706; }
+@media(max-width:600px){.shared-resp{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo"><div class="logo-icon">🛡️</div><span>Threat Modeling<small>Teaching Guide</small></span></div>
+  <div class="progress-bar-wrap"><div class="progress-label"><span>Progress</span><span id="progress-pct">0%</span></div><div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div></div>
+  <nav class="sidebar-nav">
+    <div class="nav-section"><div class="nav-section-title">Home</div><a class="nav-item" href="../index.html"><span class="nav-icon">🏠</span>Course Overview</a></div>
+    <div class="nav-section">
+      <div class="nav-section-title">Part 1 — Foundations</div>
+      <a class="nav-item" href="01-introduction.html"><span class="nav-icon">🌱</span>What is Threat Modeling?<span class="nav-badge">M1</span></a>
+      <a class="nav-item" href="02-core-concepts.html"><span class="nav-icon">🔑</span>Core Concepts<span class="nav-badge">M2</span></a>
+      <a class="nav-item" href="03-stride.html"><span class="nav-icon">⚡</span>STRIDE Framework<span class="nav-badge">M3</span></a>
+      <a class="nav-item" href="04-process.html"><span class="nav-icon">🔄</span>The TM Process<span class="nav-badge">M4</span></a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Part 2 — Application TM</div>
+      <a class="nav-item" href="05-basic-apps.html"><span class="nav-icon">💻</span>Basic Applications<span class="nav-badge">M5</span></a>
+      <a class="nav-item" href="06-web-apps.html"><span class="nav-icon">🌐</span>Web Applications<span class="nav-badge">M6</span></a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Part 3 — Modern Architectures</div>
+      <a class="nav-item active" href="07-cloud.html"><span class="nav-icon">☁️</span>Cloud Architecture<span class="nav-badge">M7</span></a>
+      <a class="nav-item" href="08-agentic.html"><span class="nav-icon">🤖</span>AI Agentic Systems<span class="nav-badge">M8</span></a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Part 4 — Advanced</div>
+      <a class="nav-item" href="09-risk-mitigation.html"><span class="nav-icon">🛡️</span>Risk & Mitigation<span class="nav-badge">M9</span></a>
+      <a class="nav-item" href="10-capstone.html"><span class="nav-icon">🏆</span>Capstone Exercise<span class="nav-badge">M10</span></a>
+    </div>
+  </nav>
+  <div class="sidebar-footer">Threat Modeling Guide · v1.0</div>
+</aside>
+
+<div class="main-wrap">
+  <header class="top-bar">
+    <button class="hamburger" id="hamburger">☰</button>
+    <span class="top-bar-title">Module 7 — Cloud Architecture</span>
+    <div class="top-bar-actions">
+      <span class="live-badge" id="live-badge" style="display:none"><span class="live-dot"></span> LIVE</span>
+      <button class="btn btn-present" id="btn-present">🎬 Present</button>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="page-header">
+      <div class="module-tag blue">☁️ Module 7 · Modern Architectures</div>
+      <h1 class="page-title">Cloud Architecture Threat Modeling</h1>
+      <p class="page-subtitle">Cloud introduces a fundamentally different threat landscape — shared responsibility, identity-first security, ephemeral compute, and blast-radius explosions. This module covers it all.</p>
+    </div>
+
+    <div class="objectives-card">
+      <h3>🎯 Learning Objectives</h3>
+      <ul>
+        <li>Explain the Shared Responsibility Model and identify what YOU are responsible for</li>
+        <li>Enumerate IAM-specific threats: over-privileged roles, credential leakage, confused deputy</li>
+        <li>Threat model common cloud patterns: serverless, containers, object storage</li>
+        <li>Identify data-at-rest and data-in-transit threats in cloud environments</li>
+        <li>Understand supply chain risks in cloud-native CI/CD pipelines</li>
+      </ul>
+    </div>
+
+    <!-- Section 1 — Shared Responsibility -->
+    <div class="section" data-title="Shared Responsibility Model">
+      <h2 class="section-title"><span class="section-num">1</span>The Shared Responsibility Model</h2>
+      <p>The most fundamental concept in cloud security. The cloud provider secures <em>the cloud itself</em>. You are responsible for security <em>in</em> the cloud — your data, your identities, your configurations.</p>
+
+      <div class="callout danger">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-body">
+          <div class="callout-title">The #1 Cloud Breach Cause</div>
+          <div class="callout-text">The vast majority of cloud security breaches are <strong>customer-side misconfigurations</strong> — not vulnerabilities in the cloud provider's infrastructure. Open S3 buckets, over-privileged IAM roles, and leaked credentials are overwhelmingly common.</div>
+        </div>
+      </div>
+
+      <div class="shared-resp">
+        <div class="shared-col cloud">
+          <h4>☁️ Cloud Provider Owns</h4>
+          <ul>
+            <li>Physical datacentre security</li>
+            <li>Network infrastructure</li>
+            <li>Hardware (servers, disks)</li>
+            <li>Hypervisor / virtualization</li>
+            <li>Managed service availability</li>
+            <li>Provider's own IAM controls</li>
+          </ul>
+        </div>
+        <div class="shared-col you">
+          <h4>🏢 YOU Own (Your Responsibility)</h4>
+          <ul>
+            <li>Your data and encryption choices</li>
+            <li>Your IAM policies and roles</li>
+            <li>Your application code</li>
+            <li>Operating system & container config</li>
+            <li>Network/security group rules</li>
+            <li>Monitoring & incident response</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="diagram-wrap">
+        <div class="diagram-title">Shared Responsibility — IaaS vs PaaS vs SaaS</div>
+        <svg viewBox="0 0 680 280" width="100%" style="max-width:680px">
+          <!-- Headers -->
+          <rect x="10" y="10" width="150" height="30" rx="6" fill="#374151"/>
+          <text x="85" y="30" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="white">Responsibility Layer</text>
+          <rect x="175" y="10" width="150" height="30" rx="6" fill="#2563eb"/>
+          <text x="250" y="30" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="white">IaaS (EC2/VMs)</text>
+          <rect x="340" y="10" width="150" height="30" rx="6" fill="#7c3aed"/>
+          <text x="415" y="30" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="white">PaaS (App Engine)</text>
+          <rect x="505" y="10" width="165" height="30" rx="6" fill="#059669"/>
+          <text x="588" y="30" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="white">SaaS (Gmail/Salesforce)</text>
+
+          <!-- Layers -->
+          <g id="layers">
+            <!-- Data -->
+            <rect x="10" y="48" width="150" height="30" rx="4" fill="#f1f5f9"/>
+            <text x="85" y="67" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#374151">Data</text>
+            <rect x="175" y="48" width="150" height="30" rx="4" fill="#fef9c3"/>
+            <text x="250" y="67" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#b45309">YOU</text>
+            <rect x="340" y="48" width="150" height="30" rx="4" fill="#fef9c3"/>
+            <text x="415" y="67" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#b45309">YOU</text>
+            <rect x="505" y="48" width="165" height="30" rx="4" fill="#fef9c3"/>
+            <text x="588" y="67" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#b45309">YOU</text>
+
+            <!-- Application -->
+            <rect x="10" y="84" width="150" height="30" rx="4" fill="#f1f5f9"/>
+            <text x="85" y="103" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#374151">Application</text>
+            <rect x="175" y="84" width="150" height="30" rx="4" fill="#fef9c3"/>
+            <text x="250" y="103" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#b45309">YOU</text>
+            <rect x="340" y="84" width="150" height="30" rx="4" fill="#fef9c3"/>
+            <text x="415" y="103" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#b45309">YOU</text>
+            <rect x="505" y="84" width="165" height="30" rx="4" fill="#dcfce7"/>
+            <text x="588" y="103" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#15803d">Provider</text>
+
+            <!-- OS/Runtime -->
+            <rect x="10" y="120" width="150" height="30" rx="4" fill="#f1f5f9"/>
+            <text x="85" y="139" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#374151">OS / Runtime</text>
+            <rect x="175" y="120" width="150" height="30" rx="4" fill="#fef9c3"/>
+            <text x="250" y="139" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#b45309">YOU</text>
+            <rect x="340" y="120" width="150" height="30" rx="4" fill="#dcfce7"/>
+            <text x="415" y="139" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#15803d">Provider</text>
+            <rect x="505" y="120" width="165" height="30" rx="4" fill="#dcfce7"/>
+            <text x="588" y="139" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#15803d">Provider</text>
+
+            <!-- Network / Virtualization -->
+            <rect x="10" y="156" width="150" height="30" rx="4" fill="#f1f5f9"/>
+            <text x="85" y="175" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#374151">Network Config</text>
+            <rect x="175" y="156" width="150" height="30" rx="4" fill="#fef9c3"/>
+            <text x="250" y="175" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#b45309">YOU</text>
+            <rect x="340" y="156" width="150" height="30" rx="4" fill="#dcfce7"/>
+            <text x="415" y="175" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#15803d">Provider</text>
+            <rect x="505" y="156" width="165" height="30" rx="4" fill="#dcfce7"/>
+            <text x="588" y="175" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#15803d">Provider</text>
+
+            <!-- Physical -->
+            <rect x="10" y="192" width="150" height="30" rx="4" fill="#f1f5f9"/>
+            <text x="85" y="211" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#374151">Physical Infra</text>
+            <rect x="175" y="192" width="150" height="30" rx="4" fill="#dcfce7"/>
+            <text x="250" y="211" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#15803d">Provider</text>
+            <rect x="340" y="192" width="150" height="30" rx="4" fill="#dcfce7"/>
+            <text x="415" y="211" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#15803d">Provider</text>
+            <rect x="505" y="192" width="165" height="30" rx="4" fill="#dcfce7"/>
+            <text x="588" y="211" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#15803d">Provider</text>
+          </g>
+
+          <!-- Legend -->
+          <rect x="175" y="240" width="18" height="14" rx="3" fill="#fef9c3" stroke="#f59e0b"/>
+          <text x="198" y="252" font-family="Inter,sans-serif" font-size="11" fill="#374151">Your responsibility</text>
+          <rect x="350" y="240" width="18" height="14" rx="3" fill="#dcfce7" stroke="#22c55e"/>
+          <text x="373" y="252" font-family="Inter,sans-serif" font-size="11" fill="#374151">Provider's responsibility</text>
+        </svg>
+        <div class="diagram-caption">As you move from IaaS → PaaS → SaaS, the provider takes on more responsibility — but you still own your data and identity management</div>
+      </div>
+    </div>
+
+    <!-- Section 2 — IAM Threats -->
+    <div class="section" data-title="IAM Threats">
+      <h2 class="section-title"><span class="section-num">2</span>Identity & Access Management (IAM) Threats</h2>
+      <p>In cloud environments, <strong>identity is the new perimeter</strong>. With IAM credentials, an attacker can do everything your application can do — without touching any of your code. IAM threats are the most critical cloud threats.</p>
+
+      <div class="threat-item">
+        <div class="threat-icon">🔑</div>
+        <div class="threat-content">
+          <div class="threat-title">T-01 — Over-Privileged IAM Roles [STRIDE: Elevation of Privilege]</div>
+          <div class="threat-desc">Developer attaches <code>AdministratorAccess</code> to an EC2 instance or Lambda function "to get it working quickly." If that resource is compromised (via SSRF, RCE, etc.), the attacker inherits full AWS admin access — they can create new users, exfiltrate all data, or destroy all infrastructure.</div>
+          <div class="threat-tags"><span class="badge badge-red">Critical</span><span class="badge badge-purple">Elevation</span></div>
+        </div>
+      </div>
+      <div class="callout success" style="margin:0 0 20px">
+        <div class="callout-icon">🛡️</div>
+        <div class="callout-body"><div class="callout-title">Mitigations</div><div class="callout-text"><strong>Principle of Least Privilege</strong> — grant only the specific actions needed. Use IAM Access Analyzer to detect over-privilege. Review and tighten IAM policies before production launch. Use Service Control Policies (SCPs) in AWS Organizations as guard rails.</div></div>
+      </div>
+
+      <div class="threat-item">
+        <div class="threat-icon">🔓</div>
+        <div class="threat-content">
+          <div class="threat-title">T-02 — Long-Lived Access Keys [STRIDE: Spoofing + Information Disclosure]</div>
+          <div class="threat-desc">AWS access keys checked into GitHub (even briefly) are scraped by bots within seconds. Long-lived static credentials (access keys) that never expire are high-value targets. One leaked key = full account compromise if the key is over-privileged.</div>
+          <div class="threat-tags"><span class="badge badge-red">Critical</span><span class="badge badge-red">Spoofing</span></div>
+        </div>
+      </div>
+      <div class="callout success" style="margin:0 0 20px">
+        <div class="callout-icon">🛡️</div>
+        <div class="callout-body"><div class="callout-title">Mitigations</div><div class="callout-text">Use <strong>IAM roles</strong> (temporary credentials) instead of long-lived access keys wherever possible. For EC2/Lambda: use instance profiles/execution roles. For local dev: use AWS SSO. Rotate any existing long-lived keys. Enable GuardDuty to detect anomalous credential usage.</div></div>
+      </div>
+
+      <div class="threat-item medium">
+        <div class="threat-icon">😕</div>
+        <div class="threat-content">
+          <div class="threat-title">T-03 — Confused Deputy Attack [STRIDE: Elevation of Privilege]</div>
+          <div class="threat-desc">A cloud service (the "deputy") has permissions your account doesn't. An attacker tricks the service into performing actions on your account by supplying your ARN. Classic example: S3 cross-account access where the bucket policy doesn't require the caller to specify their own account ID.</div>
+          <div class="threat-tags"><span class="badge badge-orange">High</span><span class="badge badge-purple">Elevation</span></div>
+        </div>
+      </div>
+      <div class="callout success" style="margin:0 0 24px">
+        <div class="callout-icon">🛡️</div>
+        <div class="callout-body"><div class="callout-title">Mitigations</div><div class="callout-text">Use <code>aws:SourceArn</code> and <code>aws:SourceAccount</code> condition keys in IAM policies for cross-service permissions. This ensures the action is initiated from the expected source.</div></div>
+      </div>
+    </div>
+
+    <!-- Section 3 — Storage Threats -->
+    <div class="section" data-title="Object Storage Threats">
+      <h2 class="section-title"><span class="section-num">3</span>Object Storage Threats (S3, GCS, Azure Blob)</h2>
+
+      <div class="threat-item">
+        <div class="threat-icon">🪣</div>
+        <div class="threat-content">
+          <div class="threat-title">T-04 — Public S3 Bucket [STRIDE: Information Disclosure]</div>
+          <div class="threat-desc">Developer creates an S3 bucket for static assets and accidentally enables public access, or sets a bucket policy with <code>"Principal": "*"</code>. Data exposure: customer PII, database backups, environment files with secrets. Happens constantly — automated scanners find these within hours.</div>
+          <div class="threat-tags"><span class="badge badge-red">Critical</span><span class="badge badge-blue">Info Disclosure</span></div>
+        </div>
+      </div>
+      <pre># ❌ Dangerous bucket policy
+{
+  "Principal": "*",
+  "Action": "s3:GetObject",
+  "Resource": "arn:aws:s3:::my-company-data/*"
+}
+
+# ✅ Lock down + enable Block Public Access
+aws s3api put-public-access-block \
+  --bucket my-bucket \
+  --public-access-block-configuration \
+    "BlockPublicAcls=true,IgnorePublicAcls=true,\
+     BlockPublicPolicy=true,RestrictPublicBuckets=true"</pre>
+
+      <div class="threat-item medium">
+        <div class="threat-icon">💾</div>
+        <div class="threat-content">
+          <div class="threat-title">T-05 — Unencrypted Backups at Rest [STRIDE: Information Disclosure]</div>
+          <div class="threat-desc">Database snapshots or file backups stored in S3 without server-side encryption. A compromised AWS account or insider threat can download and read all data without any cryptographic barrier.</div>
+          <div class="threat-tags"><span class="badge badge-orange">High</span><span class="badge badge-blue">Info Disclosure</span></div>
+        </div>
+      </div>
+      <div class="callout success" style="margin:0 0 24px">
+        <div class="callout-icon">🛡️</div>
+        <div class="callout-body"><div class="callout-title">Mitigations</div><div class="callout-text">Enable S3 default encryption (SSE-S3 minimum, SSE-KMS for sensitive data). Enforce encryption in bucket policy using condition: <code>"s3:x-amz-server-side-encryption": "aws:kms"</code>. Enable S3 Object Lock for immutable backups.</div></div>
+      </div>
+    </div>
+
+    <!-- Section 4 — Compute Threats -->
+    <div class="section" data-title="Compute: Containers & Serverless">
+      <h2 class="section-title"><span class="section-num">4</span>Compute Threats: Containers & Serverless</h2>
+
+      <div class="tabs">
+        <div class="tab-list">
+          <button class="tab-btn active" data-tab="containers">🐳 Containers</button>
+          <button class="tab-btn" data-tab="serverless">⚡ Serverless</button>
+        </div>
+
+        <div class="tab-panel active" data-panel="containers">
+          <div class="diagram-wrap" style="margin-top:16px">
+            <div class="diagram-title">Container Attack Surface</div>
+            <svg viewBox="0 0 640 280" width="100%" style="max-width:640px">
+              <defs><marker id="ca" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#6b7280"/></marker></defs>
+              <!-- Host OS -->
+              <rect x="10" y="200" width="620" height="70" rx="8" fill="#fee2e2" stroke="#fca5a5" stroke-width="1.5"/>
+              <text x="320" y="228" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="700" fill="#dc2626">🖥️ Host OS / Kernel (shared by all containers)</text>
+              <text x="320" y="248" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#991b1b">⚠️ Container escape → full host access · Privileged containers are especially dangerous</text>
+
+              <!-- Container 1 -->
+              <rect x="20" y="70" width="175" height="120" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+              <text x="107" y="95" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#1d4ed8">Container A</text>
+              <text x="107" y="113" text-anchor="middle" font-family="Inter,sans-serif" font-size="20">🌐</text>
+              <text x="107" y="133" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#3b82f6">Web App</text>
+              <rect x="35" y="148" width="145" height="22" rx="4" fill="#fee2e2"/>
+              <text x="107" y="163" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#dc2626">⚠️ Running as root</text>
+              <!-- Arrow to host -->
+              <line x1="107" y1="190" x2="107" y2="200" stroke="#dc2626" stroke-width="2" stroke-dasharray="4,2" marker-end="url(#ca)"/>
+
+              <!-- Container 2 -->
+              <rect x="230" y="70" width="175" height="120" rx="8" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.5"/>
+              <text x="317" y="95" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#15803d">Container B</text>
+              <text x="317" y="113" text-anchor="middle" font-family="Inter,sans-serif" font-size="20">⚙️</text>
+              <text x="317" y="133" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#16a34a">API Service</text>
+              <rect x="245" y="148" width="145" height="22" rx="4" fill="#fef9c3"/>
+              <text x="317" y="163" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#b45309">⚠️ Outdated base image</text>
+
+              <!-- Container 3 -->
+              <rect x="440" y="70" width="185" height="120" rx="8" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.5"/>
+              <text x="532" y="95" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#6d28d9">Container C</text>
+              <text x="532" y="113" text-anchor="middle" font-family="Inter,sans-serif" font-size="20">🗄️</text>
+              <text x="532" y="133" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#7c3aed">Database</text>
+              <rect x="455" y="148" width="155" height="22" rx="4" fill="#fee2e2"/>
+              <text x="532" y="163" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#dc2626">⚠️ Volume mounted host FS</text>
+
+              <!-- Registry -->
+              <rect x="220" y="10" width="200" height="46" rx="8" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1.5"/>
+              <text x="320" y="30" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#374151">📦 Container Registry</text>
+              <text x="320" y="46" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#6b7280">ECR / Docker Hub / GHCR</text>
+              <text x="320" y="58" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#dc2626">⚠️ Supply chain: malicious base image</text>
+              <line x1="320" y1="58" x2="317" y2="70" stroke="#6b7280" stroke-width="1.5" marker-end="url(#ca)"/>
+            </svg>
+            <div class="diagram-caption">Container threats span from base image supply chain to runtime privilege to host escape</div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Container Threat</th><th>STRIDE</th><th>Mitigation</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Running as root in container</strong></td><td><span class="badge badge-purple">E</span></td><td>Set <code>USER nonroot</code> in Dockerfile; use <code>runAsNonRoot: true</code> in Kubernetes pod spec</td></tr>
+                <tr><td><strong>Container escape via privileged mode</strong></td><td><span class="badge badge-purple">E</span></td><td>Never use <code>--privileged</code>; use seccomp and AppArmor profiles; read-only filesystem</td></tr>
+                <tr><td><strong>Vulnerable base image (CVEs)</strong></td><td><span class="badge badge-red">T · E</span></td><td>Scan images with Trivy/Snyk; use minimal base images (distroless, alpine); auto-rebuild on CVE alerts</td></tr>
+                <tr><td><strong>Secrets in environment variables</strong></td><td><span class="badge badge-blue">I</span></td><td>Use Kubernetes Secrets (encrypted at rest); prefer Vault sidecar injection or CSI secrets driver</td></tr>
+                <tr><td><strong>Unrestricted inter-pod communication</strong></td><td><span class="badge badge-purple">E</span></td><td>Apply Kubernetes Network Policies; default-deny all ingress/egress; allow only necessary paths</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="tab-panel" data-panel="serverless">
+          <div class="callout info" style="margin-top:16px">
+            <div class="callout-icon">⚡</div>
+            <div class="callout-body"><div class="callout-title">Serverless Threat Model Shifts</div><div class="callout-text">Serverless (AWS Lambda, GCP Cloud Functions) eliminates OS and server management threats — but introduces new ones unique to the execution model: short-lived functions, event-driven inputs, and per-function IAM roles.</div></div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Serverless Threat</th><th>STRIDE</th><th>Mitigation</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Event injection</strong> — malicious data in triggering event (SNS message, S3 key, API GW body) processed as trusted input</td><td><span class="badge badge-red">T</span></td><td>Validate and sanitize all event sources, even "internal" ones. Treat every event as untrusted input.</td></tr>
+                <tr><td><strong>Over-privileged Lambda execution role</strong> — function has <code>s3:*</code> and <code>dynamodb:*</code> but only needs one table</td><td><span class="badge badge-purple">E</span></td><td>Scope IAM policies to specific resources (not wildcards). One function = one minimal role.</td></tr>
+                <tr><td><strong>Function timeout exhaustion</strong> (billable DoS) — attacker triggers expensive functions</td><td><span class="badge badge-blue">D</span></td><td>Rate limiting at API Gateway; concurrency limits per function; cost anomaly detection alerts</td></tr>
+                <tr><td><strong>Dependency confusion / supply chain</strong> — malicious npm/PyPI package in function's dependencies</td><td><span class="badge badge-red">T</span></td><td>Pin dependency versions; scan with Snyk; use private npm registry; sign and verify artifacts</td></tr>
+                <tr><td><strong>Secrets in environment variables</strong> — Lambda env vars visible to anyone with <code>lambda:GetFunctionConfiguration</code></td><td><span class="badge badge-blue">I</span></td><td>Store secrets in AWS Secrets Manager or SSM Parameter Store; fetch at runtime with limited IAM</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 5 — Full Cloud DFD -->
+    <div class="section" data-title="Cloud Architecture DFD">
+      <h2 class="section-title"><span class="section-num">5</span>Full Cloud Architecture DFD</h2>
+      <p>Let's model a typical cloud-native deployment — serverless API + managed database + CDN + CI/CD:</p>
+
+      <div class="diagram-wrap">
+        <div class="diagram-title">Cloud-Native Architecture — Threat Model View</div>
+        <svg viewBox="0 0 720 400" width="100%" style="max-width:720px">
+          <defs>
+            <marker id="cl" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+              <polygon points="0 0, 8 3, 0 6" fill="#374151"/>
+            </marker>
+          </defs>
+
+          <!-- Internet -->
+          <rect x="10" y="10" width="700" height="380" rx="12" fill="#fff7ed" stroke="#fed7aa" stroke-width="1.5" stroke-dasharray="8,4"/>
+          <text x="26" y="30" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#c2410c">🌐 Internet</text>
+
+          <!-- User -->
+          <rect x="25" y="160" width="90" height="64" rx="0" fill="white" stroke="#374151" stroke-width="2"/>
+          <text x="70" y="186" text-anchor="middle" font-family="Inter,sans-serif" font-size="18">👤</text>
+          <text x="70" y="206" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#374151">User</text>
+
+          <!-- CDN -->
+          <rect x="150" y="145" width="100" height="60" rx="8" fill="#fef9c3" stroke="#f59e0b" stroke-width="1.5"/>
+          <text x="200" y="171" text-anchor="middle" font-family="Inter,sans-serif" font-size="14">🔀</text>
+          <text x="200" y="189" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#b45309">CloudFront CDN</text>
+          <text x="200" y="201" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#92400e">+ WAF rules</text>
+
+          <!-- API Gateway -->
+          <rect x="285" y="145" width="110" height="60" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+          <text x="340" y="169" text-anchor="middle" font-family="Inter,sans-serif" font-size="13">🚪</text>
+          <text x="340" y="186" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#1d4ed8">API Gateway</text>
+          <text x="340" y="198" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#3b82f6">Auth + rate limit</text>
+
+          <!-- AWS zone -->
+          <rect x="415" y="50" width="285" height="330" rx="10" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="6,4"/>
+          <text x="430" y="70" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#15803d">✅ AWS VPC (Private)</text>
+
+          <!-- Lambda -->
+          <rect x="430" y="85" width="110" height="55" rx="8" fill="white" stroke="#f97316" stroke-width="1.5"/>
+          <text x="485" y="108" text-anchor="middle" font-family="Inter,sans-serif" font-size="14">⚡</text>
+          <text x="485" y="127" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#c2410c">Lambda</text>
+          <text x="485" y="138" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#ea580c">Business logic</text>
+
+          <!-- RDS -->
+          <rect x="560" y="85" width="120" height="55" rx="8" fill="white" stroke="#7c3aed" stroke-width="1.5"/>
+          <text x="620" y="108" text-anchor="middle" font-family="Inter,sans-serif" font-size="14">🗄️</text>
+          <text x="620" y="127" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#6d28d9">RDS (PostgreSQL)</text>
+          <text x="620" y="138" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#7c3aed">Encrypted, private subnet</text>
+
+          <!-- S3 -->
+          <rect x="430" y="170" width="110" height="55" rx="8" fill="white" stroke="#0891b2" stroke-width="1.5"/>
+          <text x="485" y="193" text-anchor="middle" font-family="Inter,sans-serif" font-size="14">🪣</text>
+          <text x="485" y="212" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#0e7490">S3 Bucket</text>
+          <text x="485" y="223" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#0891b2">Private, encrypted</text>
+
+          <!-- Secrets Manager -->
+          <rect x="560" y="170" width="120" height="55" rx="8" fill="white" stroke="#dc2626" stroke-width="1.5"/>
+          <text x="620" y="193" text-anchor="middle" font-family="Inter,sans-serif" font-size="14">🔐</text>
+          <text x="620" y="212" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#dc2626">Secrets Manager</text>
+          <text x="620" y="223" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#ef4444">DB creds, API keys</text>
+
+          <!-- CI/CD external -->
+          <rect x="25" y="60" width="100" height="60" rx="0" fill="white" stroke="#374151" stroke-width="1.5"/>
+          <text x="75" y="84" text-anchor="middle" font-family="Inter,sans-serif" font-size="14">🔧</text>
+          <text x="75" y="100" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#374151">GitHub Actions</text>
+          <text x="75" y="112" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#6b7280">CI/CD pipeline</text>
+
+          <!-- ECR -->
+          <rect x="430" y="270" width="120" height="55" rx="8" fill="white" stroke="#374151" stroke-width="1.5"/>
+          <text x="490" y="293" text-anchor="middle" font-family="Inter,sans-serif" font-size="14">📦</text>
+          <text x="490" y="312" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#374151">ECR (Container Reg)</text>
+          <text x="490" y="323" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#6b7280">Scanned images only</text>
+
+          <!-- CloudWatch -->
+          <rect x="560" y="270" width="120" height="55" rx="8" fill="white" stroke="#374151" stroke-width="1.5"/>
+          <text x="620" y="293" text-anchor="middle" font-family="Inter,sans-serif" font-size="14">📊</text>
+          <text x="620" y="312" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#374151">CloudWatch + GuardDuty</text>
+          <text x="620" y="323" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#6b7280">Monitoring + threat detect</text>
+
+          <!-- Arrows -->
+          <line x1="115" y1="187" x2="148" y2="175" stroke="#374151" stroke-width="1.5" marker-end="url(#cl)"/>
+          <line x1="250" y1="175" x2="283" y2="175" stroke="#374151" stroke-width="1.5" marker-end="url(#cl)"/>
+          <line x1="395" y1="175" x2="428" y2="112" stroke="#374151" stroke-width="1.5" marker-end="url(#cl)"/>
+          <line x1="540" y1="112" x2="558" y2="112" stroke="#374151" stroke-width="1.5" marker-end="url(#cl)"/>
+          <line x1="540" y1="190" x2="558" y2="195" stroke="#374151" stroke-width="1.5" marker-end="url(#cl)"/>
+          <line x1="485" y1="140" x2="485" y2="168" stroke="#374151" stroke-width="1.5" marker-end="url(#cl)"/>
+          <line x1="125" y1="90" x2="428" y2="290" stroke="#374151" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#cl)"/>
+          <text x="270" y="213" font-family="Inter,sans-serif" font-size="9" fill="#374151" transform="rotate(26,270,213)">deploy</text>
+
+          <!-- Threat annotations -->
+          <rect x="140" y="220" width="150" height="28" rx="5" fill="#fee2e2" stroke="#fca5a5"/>
+          <text x="215" y="234" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#dc2626">⚠️ WAF bypass via CDN config</text>
+          <rect x="140" y="252" width="150" height="28" rx="5" fill="#fef9c3" stroke="#fde68a"/>
+          <text x="215" y="266" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#b45309">⚠️ CI/CD pipeline compromise</text>
+          <rect x="140" y="284" width="150" height="28" rx="5" fill="#ede9fe" stroke="#c4b5fd"/>
+          <text x="215" y="298" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#7c3aed">⚠️ Open S3 bucket</text>
+        </svg>
+        <div class="diagram-caption">Cloud-native architecture with key threat injection points highlighted — CI/CD compromise, storage misconfiguration, and WAF bypass are the top concerns</div>
+      </div>
+    </div>
+
+    <!-- Section 6 — CI/CD Supply Chain -->
+    <div class="section" data-title="CI/CD & Supply Chain">
+      <h2 class="section-title"><span class="section-num">6</span>CI/CD Pipeline & Supply Chain Threats</h2>
+      <p>The build pipeline is one of the highest-value attack targets. Compromise the CI/CD system and you can ship malicious code to production with valid signatures from a trusted process.</p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Source Code Compromise</div>
+            <div class="step-desc">Attacker commits malicious code via stolen developer credentials, a compromised GitHub account, or a malicious pull request merged without review.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Dependency Confusion / Typosquatting</div>
+            <div class="step-desc">Attacker publishes a malicious package to npm/PyPI with the same name as an internal package or a common typo (<code>lodahs</code> vs <code>lodash</code>). Package manager resolves to the public malicious version.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Build System Compromise</div>
+            <div class="step-desc">GitHub Actions workflow has write access to production. Compromised runner or malicious action injects backdoor into the build artifact before it's signed and deployed.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Secrets Leakage in Logs</div>
+            <div class="step-desc">Build logs printed to public GitHub Actions logs contain API keys, database URLs, or access tokens — visible to anyone with read access to the repo.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout tip">
+        <div class="callout-icon">🛡️</div>
+        <div class="callout-body"><div class="callout-title">Supply Chain Security Controls</div><div class="callout-text">
+          <ul class="styled" style="margin-top:4px">
+            <li>Pin dependency versions AND verify checksums (use <code>package-lock.json</code> or <code>poetry.lock</code>)</li>
+            <li>Use GitHub's OIDC for CI/CD credentials — no long-lived secrets in environment</li>
+            <li>Sign container images and verify signatures before deploy (cosign/Sigstore)</li>
+            <li>Require 2-reviewer approval on all merges to main</li>
+            <li>Scan dependencies on every commit (Dependabot, Snyk, Socket)</li>
+            <li>Use SLSA framework (Supply chain Levels for Software Artifacts) as a maturity model</li>
+          </ul>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- Quiz -->
+    <div class="section" data-title="Knowledge Check">
+      <h2 class="section-title"><span class="section-num">7</span>Knowledge Check</h2>
+
+      <div class="exercise-card"
+           data-correct="B"
+           data-feedback-correct="Correct! This is the Confused Deputy problem — the Lambda function (the deputy) has permissions your attacker account doesn't, and an SSRF payload lets the attacker use the function's role to reach the metadata service and steal credentials."
+           data-feedback-wrong="Think about what happens when a server fetches an attacker-controlled URL and that URL points to an internal metadata endpoint. What does the attacker gain access to?">
+        <div class="exercise-label">✏️ Exercise 7.1</div>
+        <div class="exercise-title">Cloud SSRF Impact</div>
+        <div class="exercise-text">Your Lambda function has an "import data from URL" feature. An attacker sends the URL <code>http://169.254.169.254/latest/meta-data/iam/security-credentials/</code>. The Lambda fetches it. What is the worst-case impact?</div>
+        <div class="exercise-options">
+          <button class="option-btn" data-value="A"><span class="opt-letter">A</span>The Lambda crashes due to the unusual URL</button>
+          <button class="option-btn" data-value="B"><span class="opt-letter">B</span>Attacker gets the Lambda's IAM role credentials — can do anything the role allows in AWS</button>
+          <button class="option-btn" data-value="C"><span class="opt-letter">C</span>The metadata endpoint requires authentication so nothing is returned</button>
+          <button class="option-btn" data-value="D"><span class="opt-letter">D</span>Attacker gets the Lambda's environment variables only</button>
+        </div>
+        <div class="exercise-feedback"></div>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="section" data-title="Summary">
+      <h2 class="section-title"><span class="section-num">8</span>Module Summary</h2>
+      <div class="callout success">
+        <div class="callout-icon">✅</div>
+        <div class="callout-body">
+          <div class="callout-title">Key Takeaways</div>
+          <div class="callout-text">
+            <ul class="styled" style="margin-top:8px">
+              <li><strong>Shared Responsibility</strong>: the cloud provider secures the cloud; you secure what's in it — your data, IAM, and configs</li>
+              <li><strong>IAM = the new perimeter</strong>: over-privileged roles and leaked credentials are the top cloud breach vectors</li>
+              <li><strong>Object storage</strong>: default to private; enable Block Public Access; encrypt everything</li>
+              <li><strong>Containers</strong>: run as non-root; scan images; never use privileged mode; apply network policies</li>
+              <li><strong>Serverless</strong>: treat all event inputs as untrusted; one minimal IAM role per function; fetch secrets at runtime</li>
+              <li><strong>CI/CD</strong>: the pipeline is an attack target — protect it like production; pin and scan dependencies</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-nav">
+      <a class="page-nav-link" href="06-web-apps.html"><span class="nav-dir">← Back</span>Web Applications & APIs</a>
+      <a class="page-nav-link" href="08-agentic.html"><span class="nav-dir">Next →</span>AI Agentic Systems</a>
+    </div>
+  </main>
+</div>
+
+<div class="present-toolbar">
+  <button id="prev-slide">◀</button>
+  <span class="slide-counter" id="slide-counter">1 / 8</span>
+  <button id="next-slide">▶</button>
+  <div class="divider"></div>
+  <button id="exit-present">✕</button>
+</div>
+
+<script src="../js/app.js"></script>
+</body>
+</html>

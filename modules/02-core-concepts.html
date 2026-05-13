@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>M2: Core Concepts — Threat Modeling Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">🛡️</div>
+    <span>Threat Modeling<small>Teaching Guide</small></span>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-label"><span>Your progress</span><span id="progress-pct">0%</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-title">Home</div>
+      <a class="nav-item" href="../index.html"><span class="nav-icon">🏠</span>Course Overview</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Part 1 — Foundations</div>
+      <a class="nav-item" href="01-introduction.html"><span class="nav-icon">🌱</span>What is Threat Modeling?<span class="nav-badge">M1</span></a>
+      <a class="nav-item active" href="02-core-concepts.html"><span class="nav-icon">🔑</span>Core Concepts<span class="nav-badge">M2</span></a>
+      <a class="nav-item" href="03-stride.html"><span class="nav-icon">⚡</span>STRIDE Framework<span class="nav-badge">M3</span></a>
+      <a class="nav-item" href="04-process.html"><span class="nav-icon">🔄</span>The TM Process<span class="nav-badge">M4</span></a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Part 2 — Application TM</div>
+      <a class="nav-item" href="05-basic-apps.html"><span class="nav-icon">💻</span>Basic Applications<span class="nav-badge">M5</span></a>
+      <a class="nav-item" href="06-web-apps.html"><span class="nav-icon">🌐</span>Web Applications<span class="nav-badge">M6</span></a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Part 3 — Modern Architectures</div>
+      <a class="nav-item" href="07-cloud.html"><span class="nav-icon">☁️</span>Cloud Architecture<span class="nav-badge">M7</span></a>
+      <a class="nav-item" href="08-agentic.html"><span class="nav-icon">🤖</span>AI Agentic Systems<span class="nav-badge">M8</span></a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Part 4 — Advanced</div>
+      <a class="nav-item" href="09-risk-mitigation.html"><span class="nav-icon">🛡️</span>Risk & Mitigation<span class="nav-badge">M9</span></a>
+      <a class="nav-item" href="10-capstone.html"><span class="nav-icon">🏆</span>Capstone Exercise<span class="nav-badge">M10</span></a>
+    </div>
+  </nav>
+  <div class="sidebar-footer">Threat Modeling Guide · v1.0</div>
+</aside>
+
+<div class="main-wrap">
+  <header class="top-bar">
+    <button class="hamburger" id="hamburger">☰</button>
+    <span class="top-bar-title">Module 2 — Core Concepts</span>
+    <div class="top-bar-actions">
+      <span class="live-badge" id="live-badge" style="display:none"><span class="live-dot"></span> LIVE</span>
+      <button class="btn btn-present" id="btn-present">🎬 Present</button>
+    </div>
+  </header>
+
+  <main class="content">
+
+    <div class="page-header">
+      <div class="module-tag purple">🔑 Module 2 · Foundations</div>
+      <h1 class="page-title">Core Concepts & Vocabulary</h1>
+      <p class="page-subtitle">Before you can model threats, you need precise language. This module builds your threat modeling vocabulary — the terms every security conversation depends on.</p>
+    </div>
+
+    <div class="objectives-card">
+      <h3>🎯 Learning Objectives</h3>
+      <ul>
+        <li>Define and distinguish: asset, threat, vulnerability, risk, and control</li>
+        <li>Explain the CIA Triad and why it anchors security thinking</li>
+        <li>Identify attack surfaces and trust boundaries in a system</li>
+        <li>Describe the attacker mindset and common attacker goals</li>
+        <li>Use risk as a function of likelihood × impact</li>
+      </ul>
+    </div>
+
+    <!-- Section 1 -->
+    <div class="section" data-title="The Core Vocabulary">
+      <h2 class="section-title"><span class="section-num">1</span>The Core Vocabulary</h2>
+      <p>These five terms form the skeleton of every security conversation. Confuse them and communication breaks down. Get them right and everything else becomes clearer.</p>
+
+      <div class="diagram-wrap">
+        <div class="diagram-title">Security Vocabulary Relationship Map</div>
+        <svg viewBox="0 0 700 300" width="100%" style="max-width:700px">
+          <defs>
+            <marker id="v-arr" markerWidth="9" markerHeight="6" refX="8" refY="3" orient="auto">
+              <polygon points="0 0, 9 3, 0 6" fill="#6b7280"/>
+            </marker>
+          </defs>
+          <!-- Asset -->
+          <rect x="270" y="20" width="160" height="56" rx="10" fill="#dcfce7" stroke="#86efac" stroke-width="2"/>
+          <text x="350" y="47" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="800" fill="#15803d">🏆 Asset</text>
+          <text x="350" y="64" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#166534">What we're protecting</text>
+          <!-- Threat -->
+          <rect x="30" y="120" width="160" height="56" rx="10" fill="#fee2e2" stroke="#fca5a5" stroke-width="2"/>
+          <text x="110" y="147" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="800" fill="#dc2626">💥 Threat</text>
+          <text x="110" y="164" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#991b1b">Potential harm event</text>
+          <!-- Vulnerability -->
+          <rect x="270" y="120" width="160" height="56" rx="10" fill="#fef9c3" stroke="#fde68a" stroke-width="2"/>
+          <text x="350" y="147" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="800" fill="#b45309">🔓 Vulnerability</text>
+          <text x="350" y="164" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#92400e">A weakness to exploit</text>
+          <!-- Risk -->
+          <rect x="510" y="120" width="160" height="56" rx="10" fill="#fce7f3" stroke="#f9a8d4" stroke-width="2"/>
+          <text x="590" y="147" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="800" fill="#be185d">📊 Risk</text>
+          <text x="590" y="164" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#9d174d">Likelihood × Impact</text>
+          <!-- Control -->
+          <rect x="270" y="230" width="160" height="56" rx="10" fill="#ede9fe" stroke="#c4b5fd" stroke-width="2"/>
+          <text x="350" y="257" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="800" fill="#7c3aed">🛡️ Control</text>
+          <text x="350" y="274" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#4c1d95">Mitigation measure</text>
+          <!-- Arrows -->
+          <line x1="110" y1="176" x2="270" y2="220" stroke="#6b7280" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#v-arr)"/>
+          <text x="165" y="210" font-family="Inter,sans-serif" font-size="10" fill="#6b7280">exploits</text>
+          <line x1="350" y1="76" x2="350" y2="120" stroke="#6b7280" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#v-arr)"/>
+          <text x="358" y="103" font-family="Inter,sans-serif" font-size="10" fill="#6b7280">threatens</text>
+          <line x1="430" y1="148" x2="510" y2="148" stroke="#6b7280" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#v-arr)"/>
+          <text x="448" y="142" font-family="Inter,sans-serif" font-size="10" fill="#6b7280">creates</text>
+          <line x1="350" y1="176" x2="350" y2="230" stroke="#6b7280" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#v-arr)"/>
+          <text x="358" y="208" font-family="Inter,sans-serif" font-size="10" fill="#6b7280">mitigated by</text>
+        </svg>
+        <div class="diagram-caption">How the five core security terms relate to each other</div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Term</th><th>Definition</th><th>Example (Banking App)</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Asset</strong></td>
+              <td>Something valuable that needs protection — data, functionality, or reputation</td>
+              <td>Customer account balances, transaction history, PII</td>
+            </tr>
+            <tr>
+              <td><strong>Threat</strong></td>
+              <td>A potential event that could harm an asset — intentional or accidental</td>
+              <td>An attacker stealing login credentials via phishing</td>
+            </tr>
+            <tr>
+              <td><strong>Vulnerability</strong></td>
+              <td>A weakness in the system that a threat can exploit</td>
+              <td>Password reset that only asks for username (no MFA)</td>
+            </tr>
+            <tr>
+              <td><strong>Risk</strong></td>
+              <td>The likelihood a threat will exploit a vulnerability × the impact if it does</td>
+              <td>High: phishing is common, account takeover impact is severe</td>
+            </tr>
+            <tr>
+              <td><strong>Control</strong></td>
+              <td>A countermeasure that reduces risk (prevents, detects, or limits impact)</td>
+              <td>MFA, anomalous login detection, rate limiting</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Section 2 — CIA Triad -->
+    <div class="section" data-title="The CIA Triad">
+      <h2 class="section-title"><span class="section-num">2</span>The CIA Triad</h2>
+      <p>Every security property that matters maps to one of three goals. This triangle has guided security thinking for decades — and it still holds up perfectly for threat modeling.</p>
+
+      <div class="diagram-wrap">
+        <div class="diagram-title">The CIA Triad</div>
+        <svg viewBox="0 0 500 300" width="100%" style="max-width:500px">
+          <!-- Triangle -->
+          <polygon points="250,30 60,260 440,260" fill="none" stroke="#e5e7eb" stroke-width="2"/>
+          <!-- C circle -->
+          <circle cx="250" cy="60" r="55" fill="#eff6ff" stroke="#2563eb" stroke-width="2.5"/>
+          <text x="250" y="52" text-anchor="middle" font-family="Inter,sans-serif" font-size="22">🔒</text>
+          <text x="250" y="72" text-anchor="middle" font-family="Inter,sans-serif" font-size="14" font-weight="800" fill="#1d4ed8">Confidentiality</text>
+          <text x="250" y="87" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#3b82f6">Data seen only by</text>
+          <text x="250" y="100" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#3b82f6">authorized parties</text>
+          <!-- I circle -->
+          <circle cx="110" cy="240" r="55" fill="#f0fdf4" stroke="#22c55e" stroke-width="2.5"/>
+          <text x="110" y="232" text-anchor="middle" font-family="Inter,sans-serif" font-size="22">✅</text>
+          <text x="110" y="252" text-anchor="middle" font-family="Inter,sans-serif" font-size="14" font-weight="800" fill="#15803d">Integrity</text>
+          <text x="110" y="267" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#16a34a">Data is accurate</text>
+          <text x="110" y="282" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#16a34a">and unmodified</text>
+          <!-- A circle -->
+          <circle cx="390" cy="240" r="55" fill="#fff7ed" stroke="#f97316" stroke-width="2.5"/>
+          <text x="390" y="232" text-anchor="middle" font-family="Inter,sans-serif" font-size="22">⚡</text>
+          <text x="390" y="252" text-anchor="middle" font-family="Inter,sans-serif" font-size="14" font-weight="800" fill="#c2410c">Availability</text>
+          <text x="390" y="267" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#ea580c">Systems work when</text>
+          <text x="390" y="282" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#ea580c">users need them</text>
+        </svg>
+        <div class="diagram-caption">The CIA Triad — every security threat attacks one or more of these three properties</div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Property</th><th>Violated By</th><th>Threat Example</th><th>Control Example</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Confidentiality</strong></td>
+              <td>Unauthorized disclosure</td>
+              <td>SQL injection exposing user passwords</td>
+              <td>Encryption, access controls, least privilege</td>
+            </tr>
+            <tr>
+              <td><strong>Integrity</strong></td>
+              <td>Unauthorized modification</td>
+              <td>Man-in-the-middle changing transaction amounts</td>
+              <td>Digital signatures, checksums, input validation</td>
+            </tr>
+            <tr>
+              <td><strong>Availability</strong></td>
+              <td>Denial of service</td>
+              <td>DDoS flood crashing the login service</td>
+              <td>Rate limiting, CDN, auto-scaling, backups</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout info">
+        <div class="callout-icon">💡</div>
+        <div class="callout-body">
+          <div class="callout-title">Beyond CIA: The "AAA" Extensions</div>
+          <div class="callout-text">Some frameworks extend CIA with: <strong>Authentication</strong> (proving who you are), <strong>Authorization</strong> (what you're allowed to do), and <strong>Accountability/Non-repudiation</strong> (can't deny your actions). STRIDE's categories map to all of these — which you'll see in Module 3.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3 — Attack Surface -->
+    <div class="section" data-title="Attack Surface">
+      <h2 class="section-title"><span class="section-num">3</span>Attack Surface</h2>
+
+      <p>The <strong>attack surface</strong> of a system is the sum of all points where an attacker can try to enter, extract data, or cause harm. The smaller the attack surface, the fewer places an attacker can probe.</p>
+
+      <div class="diagram-wrap">
+        <div class="diagram-title">Attack Surface of a Typical Web Application</div>
+        <svg viewBox="0 0 680 340" width="100%" style="max-width:680px">
+          <!-- App box -->
+          <rect x="200" y="100" width="280" height="160" rx="12" fill="#f9fafb" stroke="#e5e7eb" stroke-width="2"/>
+          <text x="340" y="132" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="700" fill="#374151">Web Application</text>
+
+          <!-- Attack vectors with arrows -->
+          <!-- Web interface -->
+          <rect x="10" y="55" width="130" height="42" rx="8" fill="#fee2e2" stroke="#fca5a5" stroke-width="1.5"/>
+          <text x="75" y="73" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#dc2626">🌐 Web Interface</text>
+          <text x="75" y="88" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#991b1b">Forms, params, files</text>
+          <line x1="140" y1="76" x2="200" y2="145" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#v-arr)"/>
+
+          <!-- API endpoints -->
+          <rect x="10" y="130" width="130" height="42" rx="8" fill="#fee2e2" stroke="#fca5a5" stroke-width="1.5"/>
+          <text x="75" y="148" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#dc2626">🔌 API Endpoints</text>
+          <text x="75" y="163" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#991b1b">REST, GraphQL, gRPC</text>
+          <line x1="140" y1="151" x2="200" y2="180" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#v-arr)"/>
+
+          <!-- Auth -->
+          <rect x="10" y="205" width="130" height="42" rx="8" fill="#fee2e2" stroke="#fca5a5" stroke-width="1.5"/>
+          <text x="75" y="223" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#dc2626">🔐 Auth Endpoints</text>
+          <text x="75" y="238" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#991b1b">Login, token refresh</text>
+          <line x1="140" y1="226" x2="200" y2="220" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#v-arr)"/>
+
+          <!-- 3rd party -->
+          <rect x="540" y="55" width="130" height="42" rx="8" fill="#fef9c3" stroke="#fde68a" stroke-width="1.5"/>
+          <text x="605" y="73" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#b45309">📦 3rd Party Libs</text>
+          <text x="605" y="88" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#92400e">Dependencies, SDKs</text>
+          <line x1="540" y1="76" x2="480" y2="145" stroke="#b45309" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#v-arr)"/>
+
+          <!-- File upload -->
+          <rect x="540" y="130" width="130" height="42" rx="8" fill="#fef9c3" stroke="#fde68a" stroke-width="1.5"/>
+          <text x="605" y="148" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#b45309">📎 File Upload</text>
+          <text x="605" y="163" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#92400e">Images, docs, CSV</text>
+          <line x1="540" y1="151" x2="480" y2="180" stroke="#b45309" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#v-arr)"/>
+
+          <!-- Admin interface -->
+          <rect x="540" y="205" width="130" height="42" rx="8" fill="#fef9c3" stroke="#fde68a" stroke-width="1.5"/>
+          <text x="605" y="223" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#b45309">⚙️ Admin Panel</text>
+          <text x="605" y="238" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#92400e">Management UI</text>
+          <line x1="540" y1="226" x2="480" y2="220" stroke="#b45309" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#v-arr)"/>
+
+          <!-- DB at bottom -->
+          <rect x="255" y="295" width="170" height="38" rx="8" fill="#ede9fe" stroke="#c4b5fd" stroke-width="1.5"/>
+          <text x="340" y="319" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#7c3aed">🗄️ Database</text>
+          <line x1="340" y1="260" x2="340" y2="295" stroke="#7c3aed" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#v-arr)"/>
+        </svg>
+        <div class="diagram-caption">Every entry point into your system — user inputs, APIs, file uploads, admin panels — is part of the attack surface</div>
+      </div>
+
+      <h3 class="subsection">Reducing the Attack Surface</h3>
+      <ul class="styled">
+        <li><strong>Minimize exposure</strong> — don't expose APIs or admin panels publicly if they don't need to be</li>
+        <li><strong>Remove unused features</strong> — disabled functionality can't be exploited</li>
+        <li><strong>Apply least privilege</strong> — services only get the permissions they actually need</li>
+        <li><strong>Segment networks</strong> — separate tiers so a breach in one doesn't reach all others</li>
+      </ul>
+    </div>
+
+    <!-- Section 4 — Trust Boundaries -->
+    <div class="section" data-title="Trust Boundaries">
+      <h2 class="section-title"><span class="section-num">4</span>Trust Boundaries</h2>
+
+      <p>A <strong>trust boundary</strong> is a line where data or control flow crosses from one trust level to another. Every time you cross a trust boundary, you must <strong>validate, authenticate, and authorize</strong>. Missing this is where most vulnerabilities live.</p>
+
+      <div class="callout warning">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-body">
+          <div class="callout-title">The Golden Rule of Trust Boundaries</div>
+          <div class="callout-text"><strong>Never trust data that crosses a boundary without validating it.</strong> User input, API responses from external services, data read from the filesystem — all of it crosses a trust boundary and must be treated as potentially hostile.</div>
+        </div>
+      </div>
+
+      <div class="diagram-wrap">
+        <div class="diagram-title">Trust Boundary Example — 3-Tier Web App</div>
+        <svg viewBox="0 0 660 280" width="100%" style="max-width:660px">
+          <!-- Internet zone -->
+          <rect x="10" y="10" width="640" height="260" rx="12" fill="#fff7ed" stroke="#fed7aa" stroke-width="1.5" stroke-dasharray="8,4"/>
+          <text x="30" y="35" font-family="Inter,sans-serif" font-size="12" font-weight="700" fill="#c2410c">🌐 Untrusted — Internet</text>
+          <!-- User -->
+          <rect x="30" y="110" width="90" height="56" rx="8" fill="#fee2e2" stroke="#fca5a5" stroke-width="1.5"/>
+          <text x="75" y="137" text-anchor="middle" font-family="Inter,sans-serif" font-size="20">👤</text>
+          <text x="75" y="155" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="600" fill="#dc2626">User</text>
+
+          <!-- Trust boundary 1 -->
+          <line x1="170" y1="15" x2="170" y2="265" stroke="#ef4444" stroke-width="2" stroke-dasharray="6,4"/>
+          <text x="172" y="28" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#dc2626">TRUST BOUNDARY 1</text>
+
+          <!-- DMZ zone -->
+          <rect x="180" y="40" width="200" height="200" rx="10" fill="#fef9c3" stroke="#fde68a" stroke-width="1.5" stroke-dasharray="6,4"/>
+          <text x="195" y="62" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#b45309">⚠️ DMZ / Web Tier</text>
+          <!-- Web server -->
+          <rect x="200" y="95" width="150" height="110" rx="8" fill="white" stroke="#fbbf24" stroke-width="1.5"/>
+          <text x="275" y="135" text-anchor="middle" font-family="Inter,sans-serif" font-size="18">🖥️</text>
+          <text x="275" y="155" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#374151">Web Server</text>
+          <text x="275" y="172" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#6b7280">Nginx / Load Balancer</text>
+          <text x="275" y="186" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#6b7280">TLS termination</text>
+
+          <!-- Arrow: User → Web -->
+          <line x1="120" y1="138" x2="196" y2="150" stroke="#6b7280" stroke-width="1.5" marker-end="url(#v-arr)"/>
+          <text x="148" y="130" font-family="Inter,sans-serif" font-size="10" fill="#6b7280">HTTPS</text>
+
+          <!-- Trust boundary 2 -->
+          <line x1="390" y1="15" x2="390" y2="265" stroke="#7c3aed" stroke-width="2" stroke-dasharray="6,4"/>
+          <text x="392" y="28" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#7c3aed">TRUST BOUNDARY 2</text>
+
+          <!-- Internal zone -->
+          <rect x="400" y="40" width="240" height="200" rx="10" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5" stroke-dasharray="6,4"/>
+          <text x="415" y="62" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#15803d">✅ Trusted — Internal Network</text>
+          <!-- App server -->
+          <rect x="415" y="75" width="100" height="80" rx="8" fill="white" stroke="#22c55e" stroke-width="1.5"/>
+          <text x="465" y="108" text-anchor="middle" font-family="Inter,sans-serif" font-size="16">⚙️</text>
+          <text x="465" y="125" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="600" fill="#374151">App Server</text>
+          <text x="465" y="142" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#6b7280">API / Business logic</text>
+          <!-- DB -->
+          <rect x="530" y="75" width="95" height="80" rx="8" fill="white" stroke="#22c55e" stroke-width="1.5"/>
+          <text x="577" y="108" text-anchor="middle" font-family="Inter,sans-serif" font-size="16">🗄️</text>
+          <text x="577" y="125" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="600" fill="#374151">Database</text>
+          <text x="577" y="142" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#6b7280">PostgreSQL</text>
+          <!-- Arrows -->
+          <line x1="354" y1="150" x2="412" y2="115" stroke="#6b7280" stroke-width="1.5" marker-end="url(#v-arr)"/>
+          <line x1="515" y1="115" x2="527" y2="115" stroke="#6b7280" stroke-width="1.5" marker-end="url(#v-arr)"/>
+
+          <!-- Validate labels -->
+          <rect x="185" y="215" width="195" height="20" rx="4" fill="#fbbf24" opacity=".4"/>
+          <text x="282" y="229" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#78350f">Validate all user input here</text>
+          <rect x="405" y="165" width="215" height="20" rx="4" fill="#22c55e" opacity=".3"/>
+          <text x="512" y="179" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#14532d">Parameterize all DB queries here</text>
+        </svg>
+        <div class="diagram-caption">Each dashed boundary is where validation and authentication must happen. Skip a boundary check and you've created a vulnerability.</div>
+      </div>
+    </div>
+
+    <!-- Section 5 — Attacker Mindset -->
+    <div class="section" data-title="The Attacker Mindset">
+      <h2 class="section-title"><span class="section-num">5</span>The Attacker Mindset</h2>
+      <p>Threat modeling requires you to temporarily switch from a builder mindset to an <strong>attacker mindset</strong>. Builders ask: "Does this feature work?" Attackers ask: "How can I make this feature do something it wasn't supposed to?"</p>
+
+      <div class="card-grid">
+        <div class="card danger">
+          <div class="card-icon">💰</div>
+          <div class="card-title">Financial Gain</div>
+          <div class="card-desc">Steal money, credit cards, payment info. Ransomware. Most attacks are financially motivated.</div>
+        </div>
+        <div class="card warning">
+          <div class="card-icon">🕵️</div>
+          <div class="card-title">Data Theft</div>
+          <div class="card-desc">PII, trade secrets, credentials. Sell on dark markets or use for targeted phishing.</div>
+        </div>
+        <div class="card primary">
+          <div class="card-icon">🔌</div>
+          <div class="card-title">Disruption</div>
+          <div class="card-desc">Competitors, hacktivists, nation-states. Take down services to cause reputation or operational damage.</div>
+        </div>
+        <div class="card accent">
+          <div class="card-icon">🎭</div>
+          <div class="card-title">Privilege Escalation</div>
+          <div class="card-desc">Gain access to higher-value systems by pivoting from a compromised lower-value one.</div>
+        </div>
+      </div>
+
+      <div class="callout tip">
+        <div class="callout-icon">🎓</div>
+        <div class="callout-body">
+          <div class="callout-title">Classroom Exercise: "Evil User Stories"</div>
+          <div class="callout-text">Have students write <em>evil user stories</em> — the attacker version of a user story. Example: instead of "As a user, I want to reset my password," write "As an attacker, I want to take over any account without knowing its password." This simple reframe unlocks threat identification faster than any framework.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 6 — Risk Formula -->
+    <div class="section" data-title="Understanding Risk">
+      <h2 class="section-title"><span class="section-num">6</span>Understanding Risk</h2>
+
+      <div class="callout info">
+        <div class="callout-icon">📐</div>
+        <div class="callout-body">
+          <div class="callout-title">The Risk Formula</div>
+          <div class="callout-text" style="font-size:18px; font-weight:700; text-align:center; padding:10px 0">
+            Risk = Likelihood × Impact
+          </div>
+          <div class="callout-text">This simple formula guides every prioritization decision. A highly likely threat with low impact may be less urgent than a rare threat with catastrophic impact. Neither dimension alone tells the full story.</div>
+        </div>
+      </div>
+
+      <div class="risk-matrix" style="margin-top:28px">
+        <!-- Headers row -->
+        <div></div>
+        <div class="matrix-header">Low Impact</div>
+        <div class="matrix-header">Med Impact</div>
+        <div class="matrix-header">High Impact</div>
+        <!-- High likelihood -->
+        <div class="matrix-label">High Likelihood</div>
+        <div class="matrix-cell matrix-med">⚠️ Medium</div>
+        <div class="matrix-cell matrix-high">🔴 High</div>
+        <div class="matrix-cell matrix-critical">🚨 Critical</div>
+        <!-- Med likelihood -->
+        <div class="matrix-label">Med Likelihood</div>
+        <div class="matrix-cell matrix-low">✅ Low</div>
+        <div class="matrix-cell matrix-med">⚠️ Medium</div>
+        <div class="matrix-cell matrix-high">🔴 High</div>
+        <!-- Low likelihood -->
+        <div class="matrix-label">Low Likelihood</div>
+        <div class="matrix-cell matrix-low">✅ Low</div>
+        <div class="matrix-cell matrix-low">✅ Low</div>
+        <div class="matrix-cell matrix-med">⚠️ Medium</div>
+      </div>
+
+      <p style="margin-top:16px; font-size:14px; color:var(--gray-600)">The risk matrix guides prioritization — fix <span style="color:#7f1d1d;font-weight:700">🚨 Critical</span> items immediately, schedule <span style="color:#991b1b;font-weight:700">🔴 High</span> for the next sprint, track <span style="color:#92400e;font-weight:700">⚠️ Medium</span> on the backlog, accept or document <span style="color:#166534;font-weight:700">✅ Low</span> risks.</p>
+    </div>
+
+    <!-- Quick check -->
+    <div class="section" data-title="Knowledge Check">
+      <h2 class="section-title"><span class="section-num">7</span>Knowledge Check</h2>
+
+      <div class="exercise-card"
+           data-correct="B"
+           data-feedback-correct="Correct! A vulnerability is the weakness — the unlocked window. The threat is what exploits it (the burglar). Risk is the combination of both."
+           data-feedback-wrong="Be careful about the distinction. The weakness in the system is the vulnerability. The actor or event that exploits it is the threat.">
+        <div class="exercise-label">✏️ Exercise 2.1</div>
+        <div class="exercise-title">Vulnerability vs Threat</div>
+        <div class="exercise-text">A web app accepts unsanitized SQL queries in its search field. What correctly identifies the vulnerability vs the threat?</div>
+        <div class="exercise-options">
+          <button class="option-btn" data-value="A"><span class="opt-letter">A</span>The vulnerability is the attacker. The threat is the search field.</button>
+          <button class="option-btn" data-value="B"><span class="opt-letter">B</span>The vulnerability is unsanitized input. The threat is an attacker running SQL injection.</button>
+          <button class="option-btn" data-value="C"><span class="opt-letter">C</span>Both are the same — a SQL injection is both the vulnerability and the threat.</button>
+          <button class="option-btn" data-value="D"><span class="opt-letter">D</span>The vulnerability is the database. The threat is the search field.</button>
+        </div>
+        <div class="exercise-feedback"></div>
+      </div>
+
+      <div class="exercise-card"
+           data-correct="C"
+           data-feedback-correct="Right! Integrity is violated when data is modified without authorization. MITM attacks changing transaction values is a classic integrity attack."
+           data-feedback-wrong="Think about the CIA Triad. Which property is about data being accurate and unmodified?">
+        <div class="exercise-label">✏️ Exercise 2.2</div>
+        <div class="exercise-title">Which CIA property is violated?</div>
+        <div class="exercise-text">An attacker intercepts a payment API request and changes the transaction amount from $10 to $1 before it reaches the server. Which CIA property is primarily violated?</div>
+        <div class="exercise-options">
+          <button class="option-btn" data-value="A"><span class="opt-letter">A</span>Confidentiality — the attacker saw the request</button>
+          <button class="option-btn" data-value="B"><span class="opt-letter">B</span>Availability — the transaction might fail</button>
+          <button class="option-btn" data-value="C"><span class="opt-letter">C</span>Integrity — the data was modified in transit</button>
+          <button class="option-btn" data-value="D"><span class="opt-letter">D</span>Authentication — the attacker isn't logged in</button>
+        </div>
+        <div class="exercise-feedback"></div>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="section" data-title="Summary">
+      <h2 class="section-title"><span class="section-num">8</span>Module Summary</h2>
+      <div class="callout success">
+        <div class="callout-icon">✅</div>
+        <div class="callout-body">
+          <div class="callout-title">Key Takeaways</div>
+          <div class="callout-text">
+            <ul class="styled" style="margin-top:8px">
+              <li><strong>Asset → Threat → Vulnerability → Risk → Control</strong> is the chain that connects everything</li>
+              <li><strong>CIA Triad</strong>: Confidentiality (secret), Integrity (accurate), Availability (accessible)</li>
+              <li><strong>Attack surface</strong>: all points where an attacker can interact with your system — minimize it</li>
+              <li><strong>Trust boundaries</strong>: anywhere data crosses from untrusted to trusted — always validate there</li>
+              <li><strong>Risk = Likelihood × Impact</strong> — use this to prioritize what to fix first</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-nav">
+      <a class="page-nav-link" href="01-introduction.html"><span class="nav-dir">← Back</span>What is Threat Modeling?</a>
+      <a class="page-nav-link" href="03-stride.html"><span class="nav-dir">Next →</span>STRIDE Framework</a>
+    </div>
+
+  </main>
+</div>
+
+<div class="present-toolbar">
+  <button id="prev-slide">◀</button>
+  <span class="slide-counter" id="slide-counter">1 / 8</span>
+  <button id="next-slide">▶</button>
+  <div class="divider"></div>
+  <button id="exit-present">✕</button>
+</div>
+
+<script src="../js/app.js"></script>
+</body>
+</html>

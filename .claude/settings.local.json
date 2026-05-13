@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /root/threat-modeling-guide -type f | sort && echo \"---\" && du -sh /root/threat-modeling-guide)",
+      "Read(//d/root/**)",
+      "Read(//c/Users//**)",
+      "Bash(ls /root/threat-modeling-guide/ 2>/dev/null && echo \"found at /root\" || echo \"not found\"; find / -name \"index.html\" -path \"*/threat*\" 2>/dev/null | head -5)",
+      "Bash(ls \"C:/Users/anim3/AppData/Local/Temp/\" | grep -i threat 2>/dev/null; ls \"C:/Program Files/\" 2>/dev/null | head -5; ls \"/\" 2>/dev/null)",
+      "Read(//usr/**)",
+      "Bash(ls /home)",
+      "Read(//d//**)",
+      "Bash(cp -r /d/root/threat-modeling-guide/css /d/threat-modelling-basics/)",
+      "Bash(cp -r /d/root/threat-modeling-guide/js /d/threat-modelling-basics/)",
+      "Bash(cp -r /d/root/threat-modeling-guide/modules /d/threat-modelling-basics/)",
+      "Bash(cp /d/root/threat-modeling-guide/index.html /d/threat-modelling-basics/)",
+      "Bash(start \"D:\\\\threat-modelling-basics\\\\index.html\")"
+    ]
+  }
+}

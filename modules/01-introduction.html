@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>M1: What is Threat Modeling? — Threat Modeling Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">🛡️</div>
+    <span>Threat Modeling<small>Teaching Guide</small></span>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-label"><span>Your progress</span><span id="progress-pct">0%</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-title">Home</div>
+      <a class="nav-item" href="../index.html"><span class="nav-icon">🏠</span>Course Overview</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Part 1 — Foundations</div>
+      <a class="nav-item active" href="01-introduction.html"><span class="nav-icon">🌱</span>What is Threat Modeling?<span class="nav-badge">M1</span></a>
+      <a class="nav-item" href="02-core-concepts.html"><span class="nav-icon">🔑</span>Core Concepts<span class="nav-badge">M2</span></a>
+      <a class="nav-item" href="03-stride.html"><span class="nav-icon">⚡</span>STRIDE Framework<span class="nav-badge">M3</span></a>
+      <a class="nav-item" href="04-process.html"><span class="nav-icon">🔄</span>The TM Process<span class="nav-badge">M4</span></a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Part 2 — Application TM</div>
+      <a class="nav-item" href="05-basic-apps.html"><span class="nav-icon">💻</span>Basic Applications<span class="nav-badge">M5</span></a>
+      <a class="nav-item" href="06-web-apps.html"><span class="nav-icon">🌐</span>Web Applications<span class="nav-badge">M6</span></a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Part 3 — Modern Architectures</div>
+      <a class="nav-item" href="07-cloud.html"><span class="nav-icon">☁️</span>Cloud Architecture<span class="nav-badge">M7</span></a>
+      <a class="nav-item" href="08-agentic.html"><span class="nav-icon">🤖</span>AI Agentic Systems<span class="nav-badge">M8</span></a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Part 4 — Advanced</div>
+      <a class="nav-item" href="09-risk-mitigation.html"><span class="nav-icon">🛡️</span>Risk & Mitigation<span class="nav-badge">M9</span></a>
+      <a class="nav-item" href="10-capstone.html"><span class="nav-icon">🏆</span>Capstone Exercise<span class="nav-badge">M10</span></a>
+    </div>
+  </nav>
+  <div class="sidebar-footer">Threat Modeling Guide · v1.0</div>
+</aside>
+
+<div class="main-wrap">
+  <header class="top-bar">
+    <button class="hamburger" id="hamburger">☰</button>
+    <span class="top-bar-title">Module 1 — What is Threat Modeling?</span>
+    <div class="top-bar-actions">
+      <span class="live-badge" id="live-badge" style="display:none"><span class="live-dot"></span> LIVE</span>
+      <button class="btn btn-present" id="btn-present">🎬 Present</button>
+    </div>
+  </header>
+
+  <main class="content">
+
+    <!-- Header -->
+    <div class="page-header">
+      <div class="module-tag blue">🌱 Module 1 · Foundations</div>
+      <h1 class="page-title">What is Threat Modeling?</h1>
+      <p class="page-subtitle">Understanding <em>what</em> threat modeling is, <em>why</em> it matters, <em>when</em> to use it, and where it fits in the security lifecycle — before we touch a single diagram.</p>
+    </div>
+
+    <!-- Objectives -->
+    <div class="objectives-card">
+      <h3>🎯 Learning Objectives</h3>
+      <ul>
+        <li>Define threat modeling in plain language, without jargon</li>
+        <li>Explain the core question threat modeling answers: <em>"What could go wrong?"</em></li>
+        <li>Describe where threat modeling sits in the development process</li>
+        <li>Name at least three reasons why organizations perform threat modeling</li>
+        <li>Identify the four key questions of any threat model</li>
+      </ul>
+    </div>
+
+    <!-- Section 1 -->
+    <div class="section" data-title="The Simple Definition">
+      <h2 class="section-title"><span class="section-num">1</span>The Simple Definition</h2>
+
+      <p>Let's start with the most honest definition possible:</p>
+
+      <div class="callout info">
+        <div class="callout-icon">📖</div>
+        <div class="callout-body">
+          <div class="callout-title">Threat Modeling, Defined</div>
+          <div class="callout-text">Threat modeling is the process of <strong>thinking like an attacker</strong> — systematically identifying what could go wrong with your system, why it would matter, and what you can do about it — <em>before</em> attackers find it first.</div>
+        </div>
+      </div>
+
+      <p>That's it. Everything else in this course — STRIDE, DFDs, risk matrices — are just tools to help you do that thinking more rigorously and more consistently.</p>
+
+      <h3 class="subsection">The House Analogy</h3>
+      <p>Imagine you're buying a house. Before you move in, you walk around it and ask:</p>
+
+      <div class="diagram-wrap">
+        <div class="diagram-title">The House Threat Model</div>
+        <svg viewBox="0 0 680 320" width="100%" style="max-width:680px">
+          <defs>
+            <marker id="arr" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+              <polygon points="0 0, 10 3.5, 0 7" fill="#6b7280"/>
+            </marker>
+          </defs>
+          <!-- House -->
+          <rect x="240" y="110" width="200" height="140" rx="4" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+          <polygon points="240,110 340,50 440,110" fill="#fbbf24" stroke="#f59e0b" stroke-width="2"/>
+          <!-- Door -->
+          <rect x="305" y="195" width="40" height="55" rx="3" fill="#d97706"/>
+          <circle cx="340" cy="223" r="3" fill="#fef3c7"/>
+          <!-- Windows -->
+          <rect x="255" y="135" width="45" height="40" rx="3" fill="#bfdbfe" stroke="#93c5fd" stroke-width="1.5"/>
+          <line x1="277" y1="135" x2="277" y2="175" stroke="#93c5fd" stroke-width="1"/>
+          <line x1="255" y1="155" x2="300" y2="155" stroke="#93c5fd" stroke-width="1"/>
+          <rect x="380" y="135" width="45" height="40" rx="3" fill="#bfdbfe" stroke="#93c5fd" stroke-width="1.5"/>
+          <line x1="402" y1="135" x2="402" y2="175" stroke="#93c5fd" stroke-width="1"/>
+          <line x1="380" y1="155" x2="425" y2="155" stroke="#93c5fd" stroke-width="1"/>
+          <!-- Questions -->
+          <!-- Q1 -->
+          <rect x="10" y="40" width="170" height="52" rx="8" fill="#fee2e2" stroke="#fca5a5" stroke-width="1.5"/>
+          <text x="95" y="60" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="700" fill="#dc2626">Who might break in?</text>
+          <text x="95" y="76" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#991b1b">(Thieves, vandals, neighbours)</text>
+          <line x1="180" y1="66" x2="240" y2="130" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr)"/>
+          <!-- Q2 -->
+          <rect x="500" y="40" width="170" height="52" rx="8" fill="#fef9c3" stroke="#fde68a" stroke-width="1.5"/>
+          <text x="585" y="60" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="700" fill="#b45309">What are the ways in?</text>
+          <text x="585" y="76" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#92400e">(Doors, windows, attic)</text>
+          <line x1="500" y1="66" x2="440" y2="130" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr)"/>
+          <!-- Q3 -->
+          <rect x="10" y="220" width="170" height="52" rx="8" fill="#dcfce7" stroke="#86efac" stroke-width="1.5"/>
+          <text x="95" y="240" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="700" fill="#15803d">What's worth protecting?</text>
+          <text x="95" y="256" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#166534">(Jewellery, documents, family)</text>
+          <line x1="180" y1="246" x2="240" y2="220" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr)"/>
+          <!-- Q4 -->
+          <rect x="500" y="220" width="170" height="52" rx="8" fill="#ede9fe" stroke="#c4b5fd" stroke-width="1.5"/>
+          <text x="585" y="240" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="700" fill="#6d28d9">What can we do about it?</text>
+          <text x="585" y="256" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#4c1d95">(Locks, alarms, cameras)</text>
+          <line x1="500" y1="246" x2="440" y2="220" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr)"/>
+        </svg>
+        <div class="diagram-caption">The four questions of threat modeling — illustrated with a house analogy</div>
+      </div>
+
+      <p>This is <em>exactly</em> what threat modeling does for software systems. Instead of a house, you have an application. Instead of thieves, you have attackers. But the thinking process is identical.</p>
+    </div>
+
+    <!-- Section 2 -->
+    <div class="section" data-title="The Four Key Questions">
+      <h2 class="section-title"><span class="section-num">2</span>The Four Key Questions</h2>
+
+      <p>Adam Shostack — one of the pioneers of threat modeling — boiled the entire discipline down to four questions. Memorize these. Every threat model you ever do is just answering these four questions:</p>
+
+      <div class="card-grid">
+        <div class="card primary">
+          <div class="card-icon">🏗️</div>
+          <div class="card-title">1. What are we building?</div>
+          <div class="card-desc">Map your system: components, data flows, trust boundaries. You can't protect what you don't understand.</div>
+        </div>
+        <div class="card danger">
+          <div class="card-icon">💥</div>
+          <div class="card-title">2. What can go wrong?</div>
+          <div class="card-desc">Enumerate threats systematically. Use frameworks like STRIDE to avoid missing categories.</div>
+        </div>
+        <div class="card success">
+          <div class="card-icon">🔧</div>
+          <div class="card-title">3. What are we doing about it?</div>
+          <div class="card-desc">Identify mitigations — security controls, design changes, monitoring, or explicit risk acceptance.</div>
+        </div>
+        <div class="card warning">
+          <div class="card-icon">✅</div>
+          <div class="card-title">4. Did we do a good enough job?</div>
+          <div class="card-desc">Review and validate. Is the analysis complete? Are mitigations adequate? Will we revisit this?</div>
+        </div>
+      </div>
+
+      <div class="callout tip">
+        <div class="callout-icon">🎓</div>
+        <div class="callout-body">
+          <div class="callout-title">Teaching Tip</div>
+          <div class="callout-text">When teaching live, ask students to apply these four questions to something <em>they already know</em> — their home, their car, their school. Grounding the abstraction in familiar contexts dramatically improves retention before moving to software systems.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3 -->
+    <div class="section" data-title="Why Threat Modeling Matters">
+      <h2 class="section-title"><span class="section-num">3</span>Why Threat Modeling Matters</h2>
+
+      <p>Here's an uncomfortable fact: <strong>most security vulnerabilities are designed in, not coded in.</strong> They come from decisions made early in a project — architecture choices, protocol selections, trust assumptions — long before the first line of code is written.</p>
+
+      <div class="diagram-wrap">
+        <div class="diagram-title">Cost of Fixing Bugs Over Time (NIST Data)</div>
+        <svg viewBox="0 0 600 240" width="100%" style="max-width:600px">
+          <!-- Y axis -->
+          <line x1="60" y1="20" x2="60" y2="190" stroke="#e5e7eb" stroke-width="1.5"/>
+          <!-- X axis -->
+          <line x1="60" y1="190" x2="560" y2="190" stroke="#e5e7eb" stroke-width="1.5"/>
+          <!-- Bars -->
+          <rect x="100" y="170" width="60" height="20" rx="4" fill="#22c55e"/>
+          <rect x="220" y="140" width="60" height="50" rx="4" fill="#f59e0b"/>
+          <rect x="340" y="90" width="60" height="100" rx="4" fill="#ef4444"/>
+          <rect x="460" y="30" width="60" height="160" rx="4" fill="#7c3aed"/>
+          <!-- Bar labels -->
+          <text x="130" y="165" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="white">1×</text>
+          <text x="250" y="155" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="white">6×</text>
+          <text x="370" y="105" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="white">15×</text>
+          <text x="490" y="45" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="white">30×</text>
+          <!-- Phase labels -->
+          <text x="130" y="207" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#6b7280">Design</text>
+          <text x="250" y="207" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#6b7280">Coding</text>
+          <text x="370" y="207" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#6b7280">Testing</text>
+          <text x="490" y="207" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#6b7280">Production</text>
+          <!-- Y axis label -->
+          <text x="30" y="110" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#6b7280" transform="rotate(-90,30,110)">Relative Cost</text>
+        </svg>
+        <div class="diagram-caption">Fixing a design flaw in production costs ~30× more than fixing it during design. This is why we threat model early.</div>
+      </div>
+
+      <h3 class="subsection">Three Concrete Benefits</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Find problems early, when they're cheap to fix</div>
+            <div class="step-desc">Changing an architecture diagram costs nothing. Patching a production authentication bypass costs millions in breach costs, customer compensation, and reputation damage.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Build a shared security mental model across the team</div>
+            <div class="step-desc">Threat modeling forces developers, architects, PMs, and security engineers to sit together and ask hard questions. The conversation itself is valuable, independent of what's written down.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Create an audit trail of conscious security decisions</div>
+            <div class="step-desc">A documented threat model shows regulators, auditors, and customers that security was considered intentionally — not bolted on after the fact.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout danger">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-body">
+          <div class="callout-title">The "We'll Add Security Later" Fallacy</div>
+          <div class="callout-text">Security can't be added to a finished system like a paint coat. If authentication wasn't designed into the architecture, adding it later requires re-architecting. The only cheap time to think about security is <strong>before you build.</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4 -->
+    <div class="section" data-title="Where TM Fits in Development">
+      <h2 class="section-title"><span class="section-num">4</span>Where Threat Modeling Fits in Development</h2>
+
+      <p>Threat modeling lives in the <strong>design phase</strong> of development. But it shouldn't be a one-time event. A good team revisits their threat model whenever something significant changes.</p>
+
+      <div class="diagram-wrap">
+        <div class="diagram-title">Threat Modeling in the SDLC</div>
+        <svg viewBox="0 0 700 180" width="100%" style="max-width:700px">
+          <defs>
+            <marker id="sdlc-arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+              <polygon points="0 0, 8 3, 0 6" fill="#d1d5db"/>
+            </marker>
+          </defs>
+          <!-- Phases -->
+          <!-- Requirements -->
+          <rect x="10" y="50" width="110" height="70" rx="10" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1.5"/>
+          <text x="65" y="80" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#64748b">Requirements</text>
+          <text x="65" y="96" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#94a3b8">Define scope</text>
+          <!-- Arrow -->
+          <line x1="120" y1="85" x2="138" y2="85" stroke="#d1d5db" stroke-width="2" marker-end="url(#sdlc-arr)"/>
+          <!-- Design — highlighted -->
+          <rect x="140" y="30" width="130" height="110" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="2.5"/>
+          <rect x="140" y="30" width="130" height="28" rx="10" fill="#2563eb"/>
+          <rect x="140" y="45" width="130" height="13" rx="0" fill="#2563eb"/>
+          <text x="205" y="48" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="700" fill="white">Design</text>
+          <text x="205" y="78" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#1d4ed8">🛡️ Threat Model</text>
+          <text x="205" y="94" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#3b82f6">← Do it HERE</text>
+          <text x="205" y="112" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#64748b">Architecture</text>
+          <text x="205" y="126" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#64748b">& DFDs</text>
+          <!-- Arrow -->
+          <line x1="270" y1="85" x2="288" y2="85" stroke="#d1d5db" stroke-width="2" marker-end="url(#sdlc-arr)"/>
+          <!-- Development -->
+          <rect x="290" y="50" width="110" height="70" rx="10" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1.5"/>
+          <text x="345" y="80" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#64748b">Development</text>
+          <text x="345" y="96" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#94a3b8">Implement</text>
+          <!-- Arrow -->
+          <line x1="400" y1="85" x2="418" y2="85" stroke="#d1d5db" stroke-width="2" marker-end="url(#sdlc-arr)"/>
+          <!-- Testing -->
+          <rect x="420" y="50" width="110" height="70" rx="10" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1.5"/>
+          <text x="475" y="80" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#64748b">Testing</text>
+          <text x="475" y="96" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#94a3b8">Pen test, QA</text>
+          <!-- Arrow -->
+          <line x1="530" y1="85" x2="548" y2="85" stroke="#d1d5db" stroke-width="2" marker-end="url(#sdlc-arr)"/>
+          <!-- Production -->
+          <rect x="550" y="50" width="130" height="70" rx="10" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1.5"/>
+          <text x="615" y="78" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#64748b">Production</text>
+          <text x="615" y="94" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#94a3b8">Monitor, patch</text>
+          <!-- Revisit label -->
+          <text x="475" y="160" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#9ca3af">Revisit TM when: major feature added · new integration · threat landscape changes</text>
+        </svg>
+        <div class="diagram-caption">Threat modeling is most valuable in the Design phase but should be revisited throughout the project lifecycle</div>
+      </div>
+
+      <h3 class="subsection">When Should You Threat Model?</h3>
+      <ul class="styled">
+        <li><strong>Before writing a single line of code</strong> — the ideal time; maximum impact, minimum cost</li>
+        <li><strong>When adding a major new feature</strong> — e.g. "we're adding OAuth login"</li>
+        <li><strong>When integrating a new third-party service</strong> — new trust boundary = new attack surface</li>
+        <li><strong>When a new attack type emerges</strong> — e.g. prompt injection for AI systems</li>
+        <li><strong>After a security incident</strong> — to understand what was missed</li>
+      </ul>
+    </div>
+
+    <!-- Section 5 -->
+    <div class="section" data-title="Common Misconceptions">
+      <h2 class="section-title"><span class="section-num">5</span>Common Misconceptions</h2>
+
+      <div class="tabs">
+        <div class="tab-list">
+          <button class="tab-btn active" data-tab="myth1">Myth 1</button>
+          <button class="tab-btn" data-tab="myth2">Myth 2</button>
+          <button class="tab-btn" data-tab="myth3">Myth 3</button>
+          <button class="tab-btn" data-tab="myth4">Myth 4</button>
+        </div>
+        <div class="tab-panel active" data-panel="myth1">
+          <div class="callout danger">
+            <div class="callout-icon">❌</div>
+            <div class="callout-body">
+              <div class="callout-title">Myth: "Threat modeling is only for security experts"</div>
+              <div class="callout-text">Reality: Threat modeling is most effective when the <em>entire team</em> participates — developers, architects, PMs. Security expertise helps, but the goal is structured critical thinking, which any engineer can learn.</div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-panel" data-panel="myth2">
+          <div class="callout danger">
+            <div class="callout-icon">❌</div>
+            <div class="callout-body">
+              <div class="callout-title">Myth: "We need a perfect, exhaustive threat model"</div>
+              <div class="callout-text">Reality: An <em>imperfect</em> threat model done and acted on is infinitely better than a perfect one never completed. Start small. The goal is better security decisions, not a comprehensive academic paper.</div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-panel" data-panel="myth3">
+          <div class="callout danger">
+            <div class="callout-icon">❌</div>
+            <div class="callout-body">
+              <div class="callout-title">Myth: "Threat modeling is a one-time activity"</div>
+              <div class="callout-text">Reality: Systems evolve. Threat landscapes change. New attack techniques emerge. Threat models must be living documents, revisited at every major change — not artifacts filed in a drawer after the first workshop.</div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-panel" data-panel="myth4">
+          <div class="callout danger">
+            <div class="callout-icon">❌</div>
+            <div class="callout-body">
+              <div class="callout-title">Myth: "Threat modeling replaces penetration testing"</div>
+              <div class="callout-text">Reality: They complement each other. Threat modeling finds <em>design-level</em> issues before building. Penetration testing finds <em>implementation-level</em> issues in what was built. You need both.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 6 — Quick Exercise -->
+    <div class="section" data-title="Knowledge Check">
+      <h2 class="section-title"><span class="section-num">6</span>Knowledge Check</h2>
+
+      <div class="exercise-card"
+           data-correct="B"
+           data-feedback-correct="Correct! Threat modeling is most impactful during the design phase, before code is written. Fixing a design flaw is dramatically cheaper than patching it in production."
+           data-feedback-wrong="Think about the cost-of-fixing curve. When is it cheapest to identify and fix a security problem?">
+        <div class="exercise-label">✏️ Exercise 1.1</div>
+        <div class="exercise-title">When is the best time to perform threat modeling?</div>
+        <div class="exercise-text">Your team is starting a new product. From a cost and effectiveness perspective, when should you first perform threat modeling?</div>
+        <div class="exercise-options">
+          <button class="option-btn" data-value="A"><span class="opt-letter">A</span>After the MVP is deployed to production and you can see real user behavior</button>
+          <button class="option-btn" data-value="B"><span class="opt-letter">B</span>During the design phase, before writing any code</button>
+          <button class="option-btn" data-value="C"><span class="opt-letter">C</span>During penetration testing just before launch</button>
+          <button class="option-btn" data-value="D"><span class="opt-letter">D</span>Only after a security incident has occurred</button>
+        </div>
+        <div class="exercise-feedback"></div>
+      </div>
+
+      <div class="exercise-card"
+           data-correct="C"
+           data-feedback-correct="Exactly right! The four questions are: What are we building? What can go wrong? What are we doing about it? Did we do a good enough job?"
+           data-feedback-wrong="Review Adam Shostack's four key questions from Section 2. The answer describes all four questions together.">
+        <div class="exercise-label">✏️ Exercise 1.2</div>
+        <div class="exercise-title">What does the threat modeling process answer?</div>
+        <div class="exercise-text">Which of the following best captures all four key questions of threat modeling?</div>
+        <div class="exercise-options">
+          <button class="option-btn" data-value="A"><span class="opt-letter">A</span>Who are our users, what do they want, how do they use the app, and are they happy?</button>
+          <button class="option-btn" data-value="B"><span class="opt-letter">B</span>What is our budget, what tools do we use, who is responsible, and when are we done?</button>
+          <button class="option-btn" data-value="C"><span class="opt-letter">C</span>What are we building, what can go wrong, what are we doing about it, and did we do a good enough job?</button>
+          <button class="option-btn" data-value="D"><span class="opt-letter">D</span>What are the known CVEs, what is our CVSS score, what patches are available?</button>
+        </div>
+        <div class="exercise-feedback"></div>
+      </div>
+    </div>
+
+    <!-- Section 7 — Summary -->
+    <div class="section" data-title="Summary">
+      <h2 class="section-title"><span class="section-num">7</span>Module Summary</h2>
+      <div class="callout success">
+        <div class="callout-icon">✅</div>
+        <div class="callout-body">
+          <div class="callout-title">Key Takeaways</div>
+          <div class="callout-text">
+            <ul class="styled" style="margin-top:8px">
+              <li><strong>Threat modeling = structured thinking like an attacker</strong>, applied before attackers do</li>
+              <li>It answers four questions: build, break, fix, check</li>
+              <li>Most valuable in the <strong>design phase</strong> — cheapest time to make security changes</li>
+              <li>It's a <strong>team activity</strong>, not just a security-team activity</li>
+              <li>It's a <strong>living document</strong>, not a one-time checkbox</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout tip">
+        <div class="callout-icon">📝</div>
+        <div class="callout-body">
+          <div class="callout-title">Instructor Note — Classroom Activity</div>
+          <div class="callout-text">Ask each student to think of a system they interact with daily (email, banking app, school portal). Have them spend 3 minutes writing answers to all four threat modeling questions for that system. Share and discuss. This makes the abstract immediately concrete.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page nav -->
+    <div class="page-nav">
+      <a class="page-nav-link" href="../index.html"><span class="nav-dir">← Back</span>Course Overview</a>
+      <a class="page-nav-link" href="02-core-concepts.html"><span class="nav-dir">Next →</span>Core Concepts</a>
+    </div>
+
+  </main>
+</div>
+
+<!-- Presenter toolbar -->
+<div class="present-toolbar">
+  <button id="prev-slide" title="Previous">◀</button>
+  <span class="slide-counter" id="slide-counter">1 / 7</span>
+  <button id="next-slide" title="Next">▶</button>
+  <div class="divider"></div>
+  <button id="exit-present" title="Exit">✕</button>
+</div>
+
+<script src="../js/app.js"></script>
+</body>
+</html>

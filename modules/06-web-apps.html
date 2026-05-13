@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>M6: Web Applications & APIs — Threat Modeling Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo"><div class="logo-icon">🛡️</div><span>Threat Modeling<small>Teaching Guide</small></span></div>
+  <div class="progress-bar-wrap"><div class="progress-label"><span>Progress</span><span id="progress-pct">0%</span></div><div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div></div>
+  <nav class="sidebar-nav">
+    <div class="nav-section"><div class="nav-section-title">Home</div><a class="nav-item" href="../index.html"><span class="nav-icon">🏠</span>Course Overview</a></div>
+    <div class="nav-section">
+      <div class="nav-section-title">Part 1 — Foundations</div>
+      <a class="nav-item" href="01-introduction.html"><span class="nav-icon">🌱</span>What is Threat Modeling?<span class="nav-badge">M1</span></a>
+      <a class="nav-item" href="02-core-concepts.html"><span class="nav-icon">🔑</span>Core Concepts<span class="nav-badge">M2</span></a>
+      <a class="nav-item" href="03-stride.html"><span class="nav-icon">⚡</span>STRIDE Framework<span class="nav-badge">M3</span></a>
+      <a class="nav-item" href="04-process.html"><span class="nav-icon">🔄</span>The TM Process<span class="nav-badge">M4</span></a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Part 2 — Application TM</div>
+      <a class="nav-item" href="05-basic-apps.html"><span class="nav-icon">💻</span>Basic Applications<span class="nav-badge">M5</span></a>
+      <a class="nav-item active" href="06-web-apps.html"><span class="nav-icon">🌐</span>Web Applications<span class="nav-badge">M6</span></a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Part 3 — Modern Architectures</div>
+      <a class="nav-item" href="07-cloud.html"><span class="nav-icon">☁️</span>Cloud Architecture<span class="nav-badge">M7</span></a>
+      <a class="nav-item" href="08-agentic.html"><span class="nav-icon">🤖</span>AI Agentic Systems<span class="nav-badge">M8</span></a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Part 4 — Advanced</div>
+      <a class="nav-item" href="09-risk-mitigation.html"><span class="nav-icon">🛡️</span>Risk & Mitigation<span class="nav-badge">M9</span></a>
+      <a class="nav-item" href="10-capstone.html"><span class="nav-icon">🏆</span>Capstone Exercise<span class="nav-badge">M10</span></a>
+    </div>
+  </nav>
+  <div class="sidebar-footer">Threat Modeling Guide · v1.0</div>
+</aside>
+
+<div class="main-wrap">
+  <header class="top-bar">
+    <button class="hamburger" id="hamburger">☰</button>
+    <span class="top-bar-title">Module 6 — Web Applications & APIs</span>
+    <div class="top-bar-actions">
+      <span class="live-badge" id="live-badge" style="display:none"><span class="live-dot"></span> LIVE</span>
+      <button class="btn btn-present" id="btn-present">🎬 Present</button>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="page-header">
+      <div class="module-tag purple">🌐 Module 6 · Application TM</div>
+      <h1 class="page-title">Web Applications & APIs</h1>
+      <p class="page-subtitle">Real-world web apps are multi-tier, API-driven, and OAuth-enabled. This module covers the threat landscape for modern web architecture — REST APIs, OAuth 2.0 flows, frontend injection, and microservices.</p>
+    </div>
+
+    <div class="objectives-card">
+      <h3>🎯 Learning Objectives</h3>
+      <ul>
+        <li>Threat model a multi-tier web application with a separate API layer</li>
+        <li>Identify threats specific to OAuth 2.0 and token-based auth flows</li>
+        <li>Map OWASP Top 10 to STRIDE categories</li>
+        <li>Enumerate API-specific threats: broken object-level auth, mass assignment, rate limiting</li>
+        <li>Understand cross-site attacks: XSS, CSRF, CORS misconfigurations</li>
+      </ul>
+    </div>
+
+    <!-- Section 1 -->
+    <div class="section" data-title="Multi-Tier Architecture">
+      <h2 class="section-title"><span class="section-num">1</span>Multi-Tier Web Architecture</h2>
+      <p>Modern web apps separate concerns into distinct tiers. Each tier boundary is a new trust boundary — and a new attack surface.</p>
+
+      <div class="arch-layer client">
+        <div class="layer-icon">🖥️</div>
+        <div>
+          <div class="layer-name">Presentation Tier — Browser / Mobile Client</div>
+          <div class="layer-desc">React/Vue/Angular SPA or native mobile app. Runs entirely in the user's environment. <strong>Treat all client-side logic as untrusted.</strong> Attackers can modify JS, intercept requests, and replay tokens. Never enforce security controls client-side only.</div>
+        </div>
+      </div>
+      <div class="arch-layer network">
+        <div class="layer-icon">🔀</div>
+        <div>
+          <div class="layer-name">Edge Tier — CDN, Load Balancer, API Gateway</div>
+          <div class="layer-desc">First line of defense. TLS termination, DDoS mitigation, WAF rules, rate limiting, bot detection. Threats: gateway bypass, misconfigured CORS, TLS downgrade attacks.</div>
+        </div>
+      </div>
+      <div class="arch-layer app">
+        <div class="layer-icon">⚙️</div>
+        <div>
+          <div class="layer-name">Application Tier — API Servers, Microservices</div>
+          <div class="layer-desc">Business logic lives here. Authentication/authorization enforcement, input validation, business rule processing. Threats: injection, broken auth, SSRF, XXE, deserialization flaws.</div>
+        </div>
+      </div>
+      <div class="arch-layer data">
+        <div class="layer-icon">🗄️</div>
+        <div>
+          <div class="layer-name">Data Tier — Databases, Caches, Queues</div>
+          <div class="layer-desc">Persistent state. SQL/NoSQL databases, Redis caches, message queues. Threats: SQL injection (if app tier fails), over-privileged DB users, unencrypted sensitive fields, cache poisoning.</div>
+        </div>
+      </div>
+      <div class="arch-layer infra">
+        <div class="layer-icon">🔧</div>
+        <div>
+          <div class="layer-name">Infrastructure Tier — OS, Containers, Network</div>
+          <div class="layer-desc">Hosting environment. Threats: container escapes, privilege escalation via OS exploits, lateral movement via open internal network ports, secrets leakage via environment variables.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2 — OWASP Top 10 -->
+    <div class="section" data-title="OWASP Top 10 → STRIDE">
+      <h2 class="section-title"><span class="section-num">2</span>OWASP Top 10 Mapped to STRIDE</h2>
+      <p>The OWASP Top 10 is the industry's most-referenced list of critical web application risks. Here's how it maps to STRIDE — connecting what OWASP <em>names</em> to what STRIDE <em>categorizes</em>:</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>OWASP Top 10 (2021)</th><th>STRIDE</th><th>Core Risk</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td><strong>A01: Broken Access Control</strong></td><td><span class="badge badge-purple">E · I</span></td><td>IDOR, privilege escalation, path traversal</td><td>User accesses admin panel without admin role</td></tr>
+            <tr><td><strong>A02: Cryptographic Failures</strong></td><td><span class="badge badge-blue">I</span></td><td>Weak encryption, plaintext secrets, TLS downgrade</td><td>Passwords stored as MD5 hashes</td></tr>
+            <tr><td><strong>A03: Injection</strong></td><td><span class="badge badge-red">T · I · E</span></td><td>SQL, NoSQL, OS command, LDAP injection</td><td>SQL injection via unsanitized search field</td></tr>
+            <tr><td><strong>A04: Insecure Design</strong></td><td><span class="badge badge-red">S · T · E</span></td><td>Missing threat models, design-level flaws</td><td>Password reset doesn't verify email ownership</td></tr>
+            <tr><td><strong>A05: Security Misconfiguration</strong></td><td><span class="badge badge-blue">I · D</span></td><td>Default creds, open S3 buckets, verbose errors</td><td>Debug mode on in production</td></tr>
+            <tr><td><strong>A06: Vulnerable Components</strong></td><td><span class="badge badge-red">T · I · E</span></td><td>Outdated libraries with known CVEs</td><td>Log4Shell in an old Log4j version</td></tr>
+            <tr><td><strong>A07: Auth Failures</strong></td><td><span class="badge badge-red">S · E</span></td><td>Weak passwords, session fixation, no MFA</td><td>Session token not invalidated after logout</td></tr>
+            <tr><td><strong>A08: Software/Data Integrity</strong></td><td><span class="badge badge-red">T</span></td><td>CI/CD pipeline attacks, insecure deserialization</td><td>Malicious npm package in build pipeline</td></tr>
+            <tr><td><strong>A09: Logging Failures</strong></td><td><span class="badge badge-orange">R</span></td><td>No audit trail, sensitive data in logs</td><td>Failed logins not logged → breach goes undetected</td></tr>
+            <tr><td><strong>A10: SSRF</strong></td><td><span class="badge badge-blue">I · E</span></td><td>Server makes requests to internal resources</td><td>Image URL parameter fetches AWS metadata endpoint</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Section 3 — OAuth 2.0 Threats -->
+    <div class="section" data-title="OAuth 2.0 Threat Model">
+      <h2 class="section-title"><span class="section-num">3</span>OAuth 2.0 Threat Model</h2>
+      <p>OAuth 2.0 is everywhere — "Login with Google/GitHub/Facebook." But its flows introduce complex trust relationships and several well-known attack vectors. Let's model them.</p>
+
+      <div class="diagram-wrap">
+        <div class="diagram-title">OAuth 2.0 Authorization Code Flow — with Threat Points</div>
+        <svg viewBox="0 0 700 380" width="100%" style="max-width:700px">
+          <defs>
+            <marker id="oa" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+              <polygon points="0 0, 8 3, 0 6" fill="#374151"/>
+            </marker>
+            <marker id="ra" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+              <polygon points="0 0, 8 3, 0 6" fill="#dc2626"/>
+            </marker>
+          </defs>
+          <!-- Actors -->
+          <!-- User -->
+          <rect x="15" y="30" width="90" height="70" rx="8" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.5"/>
+          <text x="60" y="62" text-anchor="middle" font-family="Inter,sans-serif" font-size="22">👤</text>
+          <text x="60" y="82" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#334155">User</text>
+          <text x="60" y="96" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#64748b">Browser</text>
+
+          <!-- Client App -->
+          <rect x="275" y="30" width="110" height="70" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+          <text x="330" y="62" text-anchor="middle" font-family="Inter,sans-serif" font-size="20">🖥️</text>
+          <text x="330" y="80" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#1d4ed8">Your App</text>
+          <text x="330" y="94" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#3b82f6">(OAuth Client)</text>
+
+          <!-- Auth Server -->
+          <rect x="555" y="30" width="130" height="70" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+          <text x="620" y="62" text-anchor="middle" font-family="Inter,sans-serif" font-size="20">🏛️</text>
+          <text x="620" y="80" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#15803d">Auth Server</text>
+          <text x="620" y="94" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#22c55e">Google / GitHub</text>
+
+          <!-- Flows with numbered steps -->
+          <!-- 1. User clicks login -->
+          <line x1="105" y1="65" x2="273" y2="65" stroke="#374151" stroke-width="1.5" marker-end="url(#oa)"/>
+          <text x="189" y="58" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#374151">① Click "Login with Google"</text>
+
+          <!-- 2. Redirect to Auth Server -->
+          <line x1="385" y1="55" x2="553" y2="55" stroke="#374151" stroke-width="1.5" marker-end="url(#oa)"/>
+          <text x="469" y="48" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#374151">② Redirect + state param</text>
+
+          <!-- Threat 1: State missing -->
+          <rect x="390" y="115" width="165" height="44" rx="6" fill="#fee2e2" stroke="#fca5a5" stroke-width="1.5"/>
+          <text x="472" y="133" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#dc2626">⚠️ T-01: Missing 'state'</text>
+          <text x="472" y="148" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#991b1b">→ CSRF on OAuth callback</text>
+
+          <!-- 3. User authenticates -->
+          <line x1="620" y1="100" x2="620" y2="160" stroke="#374151" stroke-width="1.5" marker-end="url(#oa)"/>
+          <text x="640" y="135" font-family="Inter,sans-serif" font-size="10" fill="#374151">③ User logs in</text>
+
+          <!-- 4. Auth code returned -->
+          <line x1="553" y1="175" x2="385" y2="175" stroke="#374151" stroke-width="1.5" marker-end="url(#oa)"/>
+          <text x="469" y="168" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#374151">④ Auth code via redirect</text>
+
+          <!-- Threat 2: Code interception -->
+          <rect x="390" y="185" width="165" height="44" rx="6" fill="#fee2e2" stroke="#fca5a5" stroke-width="1.5"/>
+          <text x="472" y="203" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#dc2626">⚠️ T-02: Code interception</text>
+          <text x="472" y="218" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#991b1b">→ Use PKCE to mitigate</text>
+
+          <!-- 5. Exchange code for token (back-channel) -->
+          <line x1="385" y1="260" x2="553" y2="260" stroke="#374151" stroke-width="1.5" marker-end="url(#oa)"/>
+          <text x="469" y="252" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#374151">⑤ Exchange code + client secret</text>
+          <text x="469" y="264" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#6b7280">(back-channel, server-to-server)</text>
+
+          <!-- Threat 3: Client secret exposure -->
+          <rect x="70" y="245" width="165" height="44" rx="6" fill="#fee2e2" stroke="#fca5a5" stroke-width="1.5"/>
+          <text x="152" y="262" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#dc2626">⚠️ T-03: Secret in SPA</text>
+          <text x="152" y="277" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#991b1b">→ Never expose client_secret</text>
+
+          <!-- 6. Access token returned -->
+          <line x1="553" y1="290" x2="385" y2="290" stroke="#374151" stroke-width="1.5" marker-end="url(#oa)"/>
+          <text x="469" y="305" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#374151">⑥ Access token + refresh token</text>
+
+          <!-- 7. Access protected resource -->
+          <line x1="273" y1="310" x2="105" y2="310" stroke="#374151" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#oa)"/>
+          <text x="189" y="328" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#374151">⑦ Session established for user</text>
+
+          <!-- Threat 4: Token leakage -->
+          <rect x="70" y="340" width="165" height="35" rx="6" fill="#fef9c3" stroke="#fde68a" stroke-width="1.5"/>
+          <text x="152" y="356" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#b45309">⚠️ T-04: Token in URL</text>
+          <text x="152" y="368" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#92400e">→ Logged in Referer headers</text>
+        </svg>
+        <div class="diagram-caption">OAuth 2.0 Authorization Code Flow — four critical threat points highlighted</div>
+      </div>
+
+      <div class="table-wrap" style="margin-top:24px">
+        <table>
+          <thead><tr><th>ID</th><th>OAuth Threat</th><th>STRIDE</th><th>Mitigation</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>T-01</td>
+              <td><strong>Missing 'state' parameter</strong> — CSRF allows attacker to trick user into linking their account with the attacker's identity</td>
+              <td><span class="badge badge-red">S</span></td>
+              <td>Always generate cryptographically random <code>state</code>; validate on callback</td>
+            </tr>
+            <tr>
+              <td>T-02</td>
+              <td><strong>Authorization code interception</strong> — code stolen from redirect URI, exchanged for tokens</td>
+              <td><span class="badge badge-red">S · T</span></td>
+              <td>Use <strong>PKCE</strong> (Proof Key for Code Exchange) — mandatory for public clients (SPAs, mobile)</td>
+            </tr>
+            <tr>
+              <td>T-03</td>
+              <td><strong>Client secret in SPA/mobile</strong> — decompilable, visible in source</td>
+              <td><span class="badge badge-blue">I</span></td>
+              <td>Use PKCE instead of client_secret for public clients. Secrets are server-side only.</td>
+            </tr>
+            <tr>
+              <td>T-04</td>
+              <td><strong>Access token in URL fragment / query string</strong> — logged in browser history, server logs, Referer headers</td>
+              <td><span class="badge badge-blue">I</span></td>
+              <td>Never pass tokens in URLs. Use Authorization Code flow (back-channel token exchange) not Implicit flow.</td>
+            </tr>
+            <tr>
+              <td>T-05</td>
+              <td><strong>Open redirect on redirect_uri</strong> — redirect_uri not strictly validated, tokens sent to attacker's server</td>
+              <td><span class="badge badge-red">S · I</span></td>
+              <td>Register exact redirect URIs, no wildcards. Validate against allowlist server-side.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Section 4 — XSS / CSRF -->
+    <div class="section" data-title="Cross-Site Attacks">
+      <h2 class="section-title"><span class="section-num">4</span>Cross-Site Attacks: XSS & CSRF</h2>
+
+      <div class="tabs">
+        <div class="tab-list">
+          <button class="tab-btn active" data-tab="xss">XSS</button>
+          <button class="tab-btn" data-tab="csrf">CSRF</button>
+          <button class="tab-btn" data-tab="cors">CORS</button>
+        </div>
+
+        <div class="tab-panel active" data-panel="xss">
+          <h3 class="subsection" style="margin-top:16px">Cross-Site Scripting (XSS)</h3>
+          <p><strong>STRIDE: Information Disclosure + Spoofing + Elevation of Privilege</strong></p>
+          <p>XSS injects malicious JavaScript into a page viewed by other users. Three types:</p>
+          <div class="card-grid">
+            <div class="card danger">
+              <div class="card-title">Stored XSS</div>
+              <div class="card-desc">Malicious script saved to DB, served to all users who view the page. Highest impact — one payload, many victims.</div>
+            </div>
+            <div class="card warning">
+              <div class="card-title">Reflected XSS</div>
+              <div class="card-desc">Script in URL parameter, reflected back in response. Requires tricking user into clicking crafted link.</div>
+            </div>
+            <div class="card primary">
+              <div class="card-title">DOM-Based XSS</div>
+              <div class="card-desc">Script injected into DOM via client-side JS reading attacker-controlled data (URL, localStorage).</div>
+            </div>
+          </div>
+          <div class="callout success" style="margin-top:16px">
+            <div class="callout-icon">🛡️</div>
+            <div class="callout-body"><div class="callout-title">Mitigations</div>
+            <div class="callout-text">
+              <ul class="styled">
+                <li><strong>Output encoding</strong> — encode all user data before rendering in HTML (<code>&amp;lt;</code> not <code>&lt;</code>)</li>
+                <li><strong>Content Security Policy (CSP)</strong> — restrict which scripts can execute</li>
+                <li><strong>Use frameworks correctly</strong> — React's JSX auto-encodes; avoid <code>dangerouslySetInnerHTML</code></li>
+                <li><strong>HttpOnly cookies</strong> — prevents JS from stealing session tokens even if XSS succeeds</li>
+              </ul>
+            </div></div>
+          </div>
+        </div>
+
+        <div class="tab-panel" data-panel="csrf">
+          <h3 class="subsection" style="margin-top:16px">Cross-Site Request Forgery (CSRF)</h3>
+          <p><strong>STRIDE: Spoofing + Tampering</strong></p>
+          <p>CSRF tricks a logged-in user's browser into making unintended requests to a site where they're authenticated — without the user knowing.</p>
+          <div class="callout danger">
+            <div class="callout-icon">⚠️</div>
+            <div class="callout-body"><div class="callout-title">How CSRF Works</div>
+            <div class="callout-text">User is logged into <code>bank.com</code>. They visit <code>evil.com</code>, which has a hidden form:<br><br>
+            <code>&lt;form action="https://bank.com/transfer" method="POST"&gt;<br>
+            &nbsp;&nbsp;&lt;input name="amount" value="10000"&gt;<br>
+            &nbsp;&nbsp;&lt;input name="to" value="attacker-account"&gt;<br>
+            &lt;/form&gt;</code><br><br>
+            The form auto-submits. The browser sends the user's session cookie automatically. The bank sees a valid authenticated request and processes the transfer.</div></div>
+          </div>
+          <div class="callout success">
+            <div class="callout-icon">🛡️</div>
+            <div class="callout-body"><div class="callout-title">Mitigations</div>
+            <div class="callout-text">
+              <ul class="styled">
+                <li><strong>CSRF tokens</strong> — random value in forms, validated server-side</li>
+                <li><strong>SameSite cookie attribute</strong> — <code>SameSite=Strict</code> or <code>Lax</code> prevents cross-site cookie sending</li>
+                <li><strong>Custom request headers</strong> — REST APIs check for <code>X-Requested-With</code> or custom header (browsers don't send these cross-origin without CORS preflight)</li>
+                <li><strong>Double Submit Cookie</strong> — compare cookie value to request parameter</li>
+              </ul>
+            </div></div>
+          </div>
+        </div>
+
+        <div class="tab-panel" data-panel="cors">
+          <h3 class="subsection" style="margin-top:16px">CORS Misconfiguration</h3>
+          <p><strong>STRIDE: Information Disclosure + Elevation of Privilege</strong></p>
+          <p>CORS controls which origins can make cross-site API requests. A misconfigured CORS policy can undo all your other auth protections.</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Misconfiguration</th><th>Impact</th><th>Fix</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td><code>Access-Control-Allow-Origin: *</code> with credentials</td>
+                  <td>Any site can read API responses with user's cookies</td>
+                  <td>Never combine <code>*</code> with <code>allow-credentials: true</code></td>
+                </tr>
+                <tr>
+                  <td>Reflecting <code>Origin</code> header without validation</td>
+                  <td>Any attacker origin is trusted</td>
+                  <td>Validate against strict allowlist of origins</td>
+                </tr>
+                <tr>
+                  <td><code>null</code> origin trusted</td>
+                  <td>Sandboxed iframes and file:// URIs can access API</td>
+                  <td>Never trust <code>Origin: null</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 5 — API Security -->
+    <div class="section" data-title="API-Specific Threats">
+      <h2 class="section-title"><span class="section-num">5</span>API-Specific Threats (OWASP API Top 10)</h2>
+      <p>APIs have their own unique threat landscape beyond the classic web app. The OWASP API Security Top 10 covers these. Here are the most critical:</p>
+
+      <div class="threat-item">
+        <div class="threat-icon">🔓</div>
+        <div class="threat-content">
+          <div class="threat-title">API1: Broken Object Level Authorization (BOLA/IDOR)</div>
+          <div class="threat-desc">APIs expose object identifiers directly. Without per-request ownership validation, <code>GET /api/invoices/4521</code> returns any invoice, not just the caller's. Most common and impactful API vulnerability.</div>
+          <div class="threat-tags"><span class="badge badge-red">Critical</span><span class="badge badge-purple">Elevation</span></div>
+        </div>
+      </div>
+
+      <div class="threat-item">
+        <div class="threat-icon">📦</div>
+        <div class="threat-content">
+          <div class="threat-title">API3: Broken Object Property Level Authorization (Mass Assignment)</div>
+          <div class="threat-desc">API blindly maps request body to model object. Client sends <code>{"name": "Alice", "isAdmin": true}</code>. If the API doesn't filter which fields can be set by clients, the user promotes themselves to admin.</div>
+          <div class="threat-tags"><span class="badge badge-red">High</span><span class="badge badge-purple">Elevation</span></div>
+        </div>
+      </div>
+      <pre>// ❌ Mass assignment vulnerability
+const user = await User.update(req.params.id, req.body);  // All fields!
+
+// ✅ Allowlist specific fields
+const { name, email, bio } = req.body;  // Only permitted fields
+const user = await User.update(req.params.id, { name, email, bio });</pre>
+
+      <div class="threat-item medium">
+        <div class="threat-icon">🌐</div>
+        <div class="threat-content">
+          <div class="threat-title">API7: Server-Side Request Forgery (SSRF)</div>
+          <div class="threat-desc">API fetches a URL supplied by the user (e.g., "import data from this URL" feature). Attacker supplies <code>http://169.254.169.254/latest/meta-data/</code> — the AWS metadata endpoint — to steal IAM credentials and compromise the entire cloud account.</div>
+          <div class="threat-tags"><span class="badge badge-red">Critical</span><span class="badge badge-blue">Info Disclosure</span></div>
+        </div>
+      </div>
+      <div class="callout success">
+        <div class="callout-icon">🛡️</div>
+        <div class="callout-body"><div class="callout-title">SSRF Mitigations</div><div class="callout-text">Validate and allowlist external URLs. Block requests to private IP ranges (10.x, 192.168.x, 172.16.x, 169.254.x). Disable unnecessary URL-fetching features. Use IMDSv2 on AWS (requires token header, defeats basic SSRF).</div></div>
+      </div>
+
+      <div class="threat-item medium">
+        <div class="threat-icon">⏱️</div>
+        <div class="threat-content">
+          <div class="threat-title">API4: Unrestricted Resource Consumption</div>
+          <div class="threat-desc">No rate limits on expensive endpoints. Attacker hammers the PDF export endpoint with concurrent requests, exhausting server CPU. Or exfiltrates the entire user database by paginating through all records.</div>
+          <div class="threat-tags"><span class="badge badge-orange">High</span><span class="badge badge-blue">DoS</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 6 — Microservices -->
+    <div class="section" data-title="Microservices Threats">
+      <h2 class="section-title"><span class="section-num">6</span>Microservices Architecture Threats</h2>
+      <p>When an app splits into microservices, the internal network becomes a new attack surface — one that often has <em>far more trust</em> than it should.</p>
+
+      <div class="diagram-wrap">
+        <div class="diagram-title">Microservices — Internal Trust Threats</div>
+        <svg viewBox="0 0 700 280" width="100%" style="max-width:700px">
+          <defs>
+            <marker id="ma" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+              <polygon points="0 0, 8 3, 0 6" fill="#374151"/>
+            </marker>
+          </defs>
+          <!-- Internet zone -->
+          <rect x="10" y="10" width="160" height="260" rx="10" fill="#fff7ed" stroke="#fed7aa" stroke-width="1.5" stroke-dasharray="6,4"/>
+          <text x="22" y="30" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#c2410c">🌐 Internet</text>
+          <rect x="25" y="45" width="130" height="55" rx="8" fill="white" stroke="#374151" stroke-width="1.5"/>
+          <text x="90" y="68" text-anchor="middle" font-family="Inter,sans-serif" font-size="14">👤</text>
+          <text x="90" y="86" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="600" fill="#374151">User Browser</text>
+
+          <!-- API Gateway -->
+          <rect x="190" y="100" width="120" height="70" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+          <text x="250" y="128" text-anchor="middle" font-family="Inter,sans-serif" font-size="13">🔀</text>
+          <text x="250" y="147" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#1d4ed8">API Gateway</text>
+          <text x="250" y="161" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#3b82f6">Auth + routing</text>
+
+          <!-- Internal zone -->
+          <rect x="330" y="10" width="360" height="260" rx="10" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="6,4"/>
+          <text x="345" y="30" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#15803d">✅ Internal Network</text>
+
+          <!-- Services -->
+          <rect x="350" y="50" width="100" height="55" rx="8" fill="white" stroke="#7c3aed" stroke-width="1.5"/>
+          <text x="400" y="74" text-anchor="middle" font-family="Inter,sans-serif" font-size="12">👤</text>
+          <text x="400" y="92" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="600" fill="#6d28d9">User Svc</text>
+
+          <rect x="470" y="50" width="100" height="55" rx="8" fill="white" stroke="#7c3aed" stroke-width="1.5"/>
+          <text x="520" y="74" text-anchor="middle" font-family="Inter,sans-serif" font-size="12">📦</text>
+          <text x="520" y="92" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="600" fill="#6d28d9">Order Svc</text>
+
+          <rect x="590" y="50" width="90" height="55" rx="8" fill="white" stroke="#7c3aed" stroke-width="1.5"/>
+          <text x="635" y="74" text-anchor="middle" font-family="Inter,sans-serif" font-size="12">💳</text>
+          <text x="635" y="92" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="600" fill="#6d28d9">Payment Svc</text>
+
+          <rect x="350" y="160" width="100" height="55" rx="8" fill="white" stroke="#7c3aed" stroke-width="1.5"/>
+          <text x="400" y="184" text-anchor="middle" font-family="Inter,sans-serif" font-size="12">📧</text>
+          <text x="400" y="202" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="600" fill="#6d28d9">Notify Svc</text>
+
+          <rect x="470" y="160" width="100" height="55" rx="8" fill="white" stroke="#7c3aed" stroke-width="1.5"/>
+          <text x="520" y="184" text-anchor="middle" font-family="Inter,sans-serif" font-size="12">🔍</text>
+          <text x="520" y="202" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="600" fill="#6d28d9">Search Svc</text>
+
+          <!-- Arrows -->
+          <line x1="170" y1="72" x2="188" y2="120" stroke="#374151" stroke-width="1.5" marker-end="url(#ma)"/>
+          <line x1="310" y1="130" x2="348" y2="80" stroke="#374151" stroke-width="1.5" marker-end="url(#ma)"/>
+          <line x1="310" y1="140" x2="348" y2="180" stroke="#374151" stroke-width="1.5" marker-end="url(#ma)"/>
+          <line x1="450" y1="77" x2="468" y2="77" stroke="#374151" stroke-width="1.5" marker-end="url(#ma)"/>
+          <line x1="570" y1="77" x2="588" y2="77" stroke="#374151" stroke-width="1.5" marker-end="url(#ma)"/>
+          <line x1="450" y1="185" x2="468" y2="185" stroke="#374151" stroke-width="1.5" marker-end="url(#ma)"/>
+
+          <!-- Threat labels -->
+          <rect x="340" y="118" width="175" height="36" rx="6" fill="#fee2e2" stroke="#fca5a5" stroke-width="1"/>
+          <text x="427" y="133" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#dc2626">⚠️ No mTLS between services</text>
+          <text x="427" y="147" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#991b1b">→ Lateral movement if one svc is compromised</text>
+
+          <rect x="560" y="130" width="125" height="30" rx="6" fill="#fef9c3" stroke="#fde68a" stroke-width="1"/>
+          <text x="622" y="145" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#b45309">⚠️ Implicit trust</text>
+          <text x="622" y="157" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#92400e">→ Any svc calls any other</text>
+        </svg>
+        <div class="diagram-caption">Internal service-to-service communication is often implicitly trusted — a compromised service can attack all others</div>
+      </div>
+
+      <h3 class="subsection">Key Microservices Threats</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Threat</th><th>STRIDE</th><th>Mitigation</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Service impersonation</strong> — malicious service claims to be a trusted internal service</td><td><span class="badge badge-red">S</span></td><td>Mutual TLS (mTLS) for all service-to-service calls; service mesh (Istio/Linkerd)</td></tr>
+            <tr><td><strong>Lateral movement</strong> — compromised service attacks all others on flat internal network</td><td><span class="badge badge-purple">E</span></td><td>Network segmentation; principle of least privilege per service; service-level authorization</td></tr>
+            <tr><td><strong>Secrets sprawl</strong> — each service hardcodes DB creds, API keys</td><td><span class="badge badge-blue">I</span></td><td>Centralized secrets management (Vault, AWS Secrets Manager); service identities (not shared secrets)</td></tr>
+            <tr><td><strong>Event queue poisoning</strong> — injecting malicious messages into Kafka/RabbitMQ</td><td><span class="badge badge-red">T</span></td><td>Message signing, input validation on consumer side; queue access controls</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Knowledge Check -->
+    <div class="section" data-title="Knowledge Check">
+      <h2 class="section-title"><span class="section-num">7</span>Knowledge Check</h2>
+
+      <div class="exercise-card"
+           data-correct="C"
+           data-feedback-correct="Exactly right! PKCE (Proof Key for Code Exchange) was designed specifically to prevent authorization code interception attacks for public clients like SPAs and mobile apps that can't safely store a client_secret."
+           data-feedback-wrong="Think about what PKCE protects: it verifies that the party exchanging the code is the same one that initiated the flow, even without a client secret.">
+        <div class="exercise-label">✏️ Exercise 6.1</div>
+        <div class="exercise-title">OAuth 2.0 Code Interception</div>
+        <div class="exercise-text">Your team is building a Single Page Application (SPA) that uses OAuth 2.0 for authentication. The SPA can't securely store a client_secret. What's the correct mitigation against authorization code interception?</div>
+        <div class="exercise-options">
+          <button class="option-btn" data-value="A"><span class="opt-letter">A</span>Store the client_secret in an environment variable on the frontend</button>
+          <button class="option-btn" data-value="B"><span class="opt-letter">B</span>Use the Implicit flow so no code is ever issued</button>
+          <button class="option-btn" data-value="C"><span class="opt-letter">C</span>Use the Authorization Code flow with PKCE</button>
+          <button class="option-btn" data-value="D"><span class="opt-letter">D</span>Encrypt the client_secret with AES before storing in localStorage</button>
+        </div>
+        <div class="exercise-feedback"></div>
+      </div>
+
+      <div class="exercise-card"
+           data-correct="B"
+           data-feedback-correct="Right! Mass assignment occurs when an API binds all request body fields to the model without filtering. The fix is explicit field allowlisting."
+           data-feedback-wrong="Consider what happens when a user sends an unexpected field like isAdmin:true and the API blindly applies it to the user object.">
+        <div class="exercise-label">✏️ Exercise 6.2</div>
+        <div class="exercise-title">Spot the API Threat</div>
+        <div class="exercise-text">A user profile API does: <code>User.update(id, req.body)</code> without filtering fields. A user sends <code>{"name": "Bob", "isAdmin": true, "creditBalance": 99999}</code>. What vulnerability is this?</div>
+        <div class="exercise-options">
+          <button class="option-btn" data-value="A"><span class="opt-letter">A</span>SQL Injection — manipulating database queries</button>
+          <button class="option-btn" data-value="B"><span class="opt-letter">B</span>Mass Assignment — unauthorized modification of object properties</button>
+          <button class="option-btn" data-value="C"><span class="opt-letter">C</span>SSRF — the server is making unintended requests</button>
+          <button class="option-btn" data-value="D"><span class="opt-letter">D</span>XSS — injecting scripts into the response</button>
+        </div>
+        <div class="exercise-feedback"></div>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="section" data-title="Summary">
+      <h2 class="section-title"><span class="section-num">8</span>Module Summary</h2>
+      <div class="callout success">
+        <div class="callout-icon">✅</div>
+        <div class="callout-body">
+          <div class="callout-title">Key Takeaways</div>
+          <div class="callout-text">
+            <ul class="styled" style="margin-top:8px">
+              <li><strong>Each architectural tier</strong> has its own threat profile — model them separately</li>
+              <li><strong>OWASP Top 10</strong> maps directly to STRIDE — know both lists and their relationship</li>
+              <li><strong>OAuth 2.0</strong>: use Auth Code + PKCE for public clients; validate state; allowlist redirect URIs</li>
+              <li><strong>XSS</strong>: output encoding + CSP; <strong>CSRF</strong>: SameSite cookies + CSRF tokens</li>
+              <li><strong>API threats</strong>: BOLA/IDOR, mass assignment, SSRF — validate authorization on every request</li>
+              <li><strong>Microservices</strong>: don't trust internal network by default; use mTLS and least privilege per service</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-nav">
+      <a class="page-nav-link" href="05-basic-apps.html"><span class="nav-dir">← Back</span>Basic Applications</a>
+      <a class="page-nav-link" href="07-cloud.html"><span class="nav-dir">Next →</span>Cloud Architecture</a>
+    </div>
+  </main>
+</div>
+
+<div class="present-toolbar">
+  <button id="prev-slide">◀</button>
+  <span class="slide-counter" id="slide-counter">1 / 8</span>
+  <button id="next-slide">▶</button>
+  <div class="divider"></div>
+  <button id="exit-present">✕</button>
+</div>
+
+<script src="../js/app.js"></script>
+</body>
+</html>

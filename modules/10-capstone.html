@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>M10: Capstone Exercise — Threat Modeling Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../css/styles.css" />
+<style>
+.phase-header {
+  display:flex; align-items:center; gap:14px;
+  background: var(--gray-900); color:white;
+  padding: 16px 24px; border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  margin-bottom:0;
+}
+.phase-header .phase-num {
+  width:40px; height:40px; border-radius:50%;
+  background:rgba(255,255,255,.15); display:flex;
+  align-items:center; justify-content:center;
+  font-weight:800; font-size:16px; flex-shrink:0;
+}
+.phase-header h3 { font-size:16px; font-weight:700; margin:0; }
+.phase-header p { font-size:12px; color:rgba(255,255,255,.6); margin:4px 0 0; }
+.phase-body {
+  background:white; border:1px solid var(--gray-200);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  padding:24px; margin-bottom:28px;
+}
+.reveal-answer {
+  margin-top:16px; padding:12px 16px;
+  background: var(--gray-50); border:1px dashed var(--gray-300);
+  border-radius: var(--radius); cursor:pointer;
+  font-size:13px; font-weight:600; color:var(--gray-500);
+  transition: var(--transition);
+}
+.reveal-answer:hover { background:var(--primary-light); color:var(--primary); border-color:var(--primary); }
+.answer-box { display:none; margin-top:12px; }
+.answer-box.open { display:block; }
+.timer-badge {
+  display:inline-flex; align-items:center; gap:6px;
+  background:var(--gray-100); padding:4px 12px; border-radius:12px;
+  font-size:12px; font-weight:700; color:var(--gray-600);
+  margin-left:auto;
+}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo"><div class="logo-icon">🛡️</div><span>Threat Modeling<small>Teaching Guide</small></span></div>
+  <div class="progress-bar-wrap"><div class="progress-label"><span>Progress</span><span id="progress-pct">0%</span></div><div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div></div>
+  <nav class="sidebar-nav">
+    <div class="nav-section"><div class="nav-section-title">Home</div><a class="nav-item" href="../index.html"><span class="nav-icon">🏠</span>Course Overview</a></div>
+    <div class="nav-section">
+      <div class="nav-section-title">Part 1 — Foundations</div>
+      <a class="nav-item" href="01-introduction.html"><span class="nav-icon">🌱</span>What is Threat Modeling?<span class="nav-badge">M1</span></a>
+      <a class="nav-item" href="02-core-concepts.html"><span class="nav-icon">🔑</span>Core Concepts<span class="nav-badge">M2</span></a>
+      <a class="nav-item" href="03-stride.html"><span class="nav-icon">⚡</span>STRIDE Framework<span class="nav-badge">M3</span></a>
+      <a class="nav-item" href="04-process.html"><span class="nav-icon">🔄</span>The TM Process<span class="nav-badge">M4</span></a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Part 2 — Application TM</div>
+      <a class="nav-item" href="05-basic-apps.html"><span class="nav-icon">💻</span>Basic Applications<span class="nav-badge">M5</span></a>
+      <a class="nav-item" href="06-web-apps.html"><span class="nav-icon">🌐</span>Web Applications<span class="nav-badge">M6</span></a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Part 3 — Modern Architectures</div>
+      <a class="nav-item" href="07-cloud.html"><span class="nav-icon">☁️</span>Cloud Architecture<span class="nav-badge">M7</span></a>
+      <a class="nav-item" href="08-agentic.html"><span class="nav-icon">🤖</span>AI Agentic Systems<span class="nav-badge">M8</span></a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Part 4 — Advanced</div>
+      <a class="nav-item" href="09-risk-mitigation.html"><span class="nav-icon">🛡️</span>Risk & Mitigation<span class="nav-badge">M9</span></a>
+      <a class="nav-item active" href="10-capstone.html"><span class="nav-icon">🏆</span>Capstone Exercise<span class="nav-badge">M10</span></a>
+    </div>
+  </nav>
+  <div class="sidebar-footer">Threat Modeling Guide · v1.0</div>
+</aside>
+
+<div class="main-wrap">
+  <header class="top-bar">
+    <button class="hamburger" id="hamburger">☰</button>
+    <span class="top-bar-title">Module 10 — Capstone Exercise</span>
+    <div class="top-bar-actions">
+      <span class="live-badge" id="live-badge" style="display:none"><span class="live-dot"></span> LIVE</span>
+      <button class="btn btn-present" id="btn-present">🎬 Present</button>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="page-header">
+      <div class="module-tag purple">🏆 Module 10 · Capstone</div>
+      <h1 class="page-title">Capstone: FinFlow Threat Model</h1>
+      <p class="page-subtitle">Apply everything you've learned to model a real-world fintech application — <strong>FinFlow</strong> — a payment platform with cloud infrastructure, a REST API, OAuth login, and an AI assistant. This is a full end-to-end threat model.</p>
+    </div>
+
+    <div class="callout tip">
+      <div class="callout-icon">🎓</div>
+      <div class="callout-body">
+        <div class="callout-title">Instructor Guide — Running This Capstone</div>
+        <div class="callout-text">
+          <strong>Recommended format:</strong> 60-minute live session with groups of 3–4 students.<br>
+          <strong>Materials needed:</strong> Whiteboard (physical or Miro/FigJam), printed system description cards.<br>
+          <strong>Phases:</strong> Each phase has a timer badge showing recommended time. Work in groups, compare answers using the "Reveal Answer" buttons for facilitated discussion.<br>
+          <strong>Tip:</strong> Don't reveal answers until each group presents — the disagreement and discussion is where the most learning happens.
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 1 — System Description -->
+    <div class="section" data-title="System Description">
+      <h2 class="section-title"><span class="section-num">1</span>FinFlow — System Description</h2>
+      <p>Read the following system description carefully. Your job is to threat model it end to end.</p>
+
+      <div class="callout info">
+        <div class="callout-icon">🏦</div>
+        <div class="callout-body">
+          <div class="callout-title">FinFlow — Fintech Payment Platform</div>
+          <div class="callout-text">
+            <strong>What it does:</strong> FinFlow allows businesses (merchants) to accept payments from customers. It provides a merchant dashboard, a payment widget that merchants embed in their websites, and a public REST API.<br><br>
+            <strong>Key users:</strong>
+            <ul class="styled" style="margin-top:8px">
+              <li><strong>Customers</strong>: make payments via merchant-embedded widget (not logged in to FinFlow)</li>
+              <li><strong>Merchants</strong>: log in to dashboard to manage payments, view analytics, configure webhooks</li>
+              <li><strong>FinFlow Admins</strong>: internal team, manage platform via admin portal</li>
+            </ul>
+            <strong>Architecture:</strong>
+            <ul class="styled" style="margin-top:8px">
+              <li>React SPA dashboard (Vercel hosting)</li>
+              <li>REST API (Node.js on AWS Lambda, behind API Gateway)</li>
+              <li>Merchant authentication via <strong>OAuth 2.0 (Auth0)</strong></li>
+              <li>Payment processing via <strong>Stripe API</strong> (PCI-compliant)</li>
+              <li>Transaction data stored in <strong>AWS RDS (PostgreSQL)</strong> — VPC, private subnet</li>
+              <li><strong>AI Assistant</strong>: merchants can ask "Why did this payment fail?" — uses GPT-4 with access to the merchant's transaction history and the ability to trigger refunds via a tool call</li>
+              <li>Webhook system: FinFlow sends POST requests to merchant-configured URLs on payment events</li>
+              <li>CI/CD: GitHub Actions → ECR → Lambda</li>
+            </ul>
+            <strong>Sensitive data:</strong> Card numbers (handled by Stripe, not stored), transaction amounts, merchant bank account details (for payouts), customer email addresses, merchant API keys.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 1 -->
+    <div class="section" data-title="Phase 1: Scope & Assets">
+      <div class="phase-header">
+        <div class="phase-num">1</div>
+        <div>
+          <h3>Phase 1: Scope & Asset Identification</h3>
+          <p>Define your scope and identify the crown jewels</p>
+        </div>
+        <span class="timer-badge">⏱️ 8 min</span>
+      </div>
+      <div class="phase-body">
+        <p style="font-size:14px;color:var(--gray-700);margin-bottom:16px">Answer these questions as a team. Write your answers on the whiteboard.</p>
+
+        <ol class="styled">
+          <li>What are FinFlow's <strong>crown jewels</strong> — the assets where a breach would be most catastrophic?</li>
+          <li>What is <strong>out of scope</strong> for this threat model? (What are we explicitly NOT modeling?)</li>
+          <li>Who are the <strong>threat actors</strong> — who would want to attack this system and why?</li>
+          <li>Which <strong>regulatory frameworks</strong> apply? (PCI DSS? GDPR? SOC 2?)</li>
+        </ol>
+
+        <button class="reveal-answer" onclick="this.nextElementSibling.classList.toggle('open'); this.textContent = this.nextElementSibling.classList.contains('open') ? '🔼 Hide Suggested Answers' : '🔽 Reveal Suggested Answers'">🔽 Reveal Suggested Answers</button>
+        <div class="answer-box">
+          <div class="callout success">
+            <div class="callout-icon">💡</div>
+            <div class="callout-body">
+              <div class="callout-title">Suggested Answers</div>
+              <div class="callout-text">
+                <strong>Crown jewels:</strong> Merchant bank account details (payout routing), Merchant API keys (direct financial access), Transaction records (payment amounts, customer emails), Admin portal access (full platform control), Stripe integration credentials<br><br>
+                <strong>Out of scope:</strong> Stripe's internal systems (they own that security), Vercel infrastructure, Auth0's identity systems, merchants' own websites where they embed the widget<br><br>
+                <strong>Threat actors:</strong> (1) Financially motivated cybercriminals — redirect payouts, steal merchant bank details; (2) Competing merchants — steal analytics data; (3) Disgruntled insiders — FinFlow admin team; (4) Nation-state actors (unlikely, but possible for financial infrastructure)<br><br>
+                <strong>Regulations:</strong> PCI DSS (card data), GDPR (EU customer emails = personal data), SOC 2 Type II (likely required by enterprise merchants)
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 2 -->
+    <div class="section" data-title="Phase 2: Draw the DFD">
+      <div class="phase-header">
+        <div class="phase-num">2</div>
+        <div>
+          <h3>Phase 2: Draw the Data Flow Diagram</h3>
+          <p>Map the system — every component, flow, and trust boundary</p>
+        </div>
+        <span class="timer-badge">⏱️ 15 min</span>
+      </div>
+      <div class="phase-body">
+        <p style="font-size:14px;color:var(--gray-700);margin-bottom:16px">Draw the DFD on your whiteboard. Include:</p>
+        <ul class="styled">
+          <li>All external entities (customers, merchants, FinFlow admins, Stripe, Auth0, merchant webhooks)</li>
+          <li>All processes (API Gateway, Lambda functions, AI Assistant, webhook sender)</li>
+          <li>All data stores (RDS, secrets store)</li>
+          <li>All data flows (label each with what data moves)</li>
+          <li>All trust boundaries (at minimum: Internet / API Zone / DB Zone / External Services)</li>
+        </ul>
+
+        <button class="reveal-answer" onclick="this.nextElementSibling.classList.toggle('open'); this.textContent = this.nextElementSibling.classList.contains('open') ? '🔼 Hide Reference DFD' : '🔽 Reveal Reference DFD'">🔽 Reveal Reference DFD</button>
+        <div class="answer-box">
+          <div class="diagram-wrap" style="margin-top:0">
+            <div class="diagram-title">FinFlow — Reference DFD</div>
+            <svg viewBox="0 0 720 440" width="100%" style="max-width:720px">
+              <defs>
+                <marker id="ff" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                  <polygon points="0 0, 8 3, 0 6" fill="#374151"/>
+                </marker>
+              </defs>
+
+              <!-- Internet zone -->
+              <rect x="8" y="8" width="704" height="424" rx="12" fill="#fff7ed" stroke="#fed7aa" stroke-width="1.5" stroke-dasharray="8,4"/>
+              <text x="24" y="28" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#c2410c">🌐 Internet (Untrusted)</text>
+
+              <!-- External entities -->
+              <rect x="20" y="100" width="80" height="58" rx="0" fill="white" stroke="#374151" stroke-width="1.5"/>
+              <text x="60" y="124" text-anchor="middle" font-family="Inter,sans-serif" font-size="14">👤</text>
+              <text x="60" y="142" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#374151">Customer</text>
+              <text x="60" y="154" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#6b7280">via widget</text>
+
+              <rect x="20" y="210" width="80" height="58" rx="0" fill="white" stroke="#374151" stroke-width="1.5"/>
+              <text x="60" y="234" text-anchor="middle" font-family="Inter,sans-serif" font-size="14">🏪</text>
+              <text x="60" y="252" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#374151">Merchant</text>
+              <text x="60" y="264" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#6b7280">dashboard+API</text>
+
+              <rect x="20" y="320" width="80" height="58" rx="0" fill="white" stroke="#374151" stroke-width="1.5"/>
+              <text x="60" y="344" text-anchor="middle" font-family="Inter,sans-serif" font-size="14">👑</text>
+              <text x="60" y="362" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#374151">Admin</text>
+              <text x="60" y="374" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#6b7280">internal portal</text>
+
+              <!-- API Zone -->
+              <rect x="160" y="50" width="290" height="370" rx="10" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="6,4"/>
+              <text x="175" y="70" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#15803d">✅ AWS — Lambda + API Gateway</text>
+
+              <!-- API GW -->
+              <rect x="175" y="82" width="110" height="52" rx="8" fill="white" stroke="#2563eb" stroke-width="1.5"/>
+              <text x="230" y="104" text-anchor="middle" font-family="Inter,sans-serif" font-size="12">🚪</text>
+              <text x="230" y="120" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#1d4ed8">API Gateway</text>
+              <text x="230" y="130" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#3b82f6">+Auth0 JWT verify</text>
+
+              <!-- Payment Lambda -->
+              <circle cx="230" cy="210" r="44" fill="white" stroke="#f97316" stroke-width="1.5"/>
+              <text x="230" y="203" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#c2410c">1. Payment</text>
+              <text x="230" y="217" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#ea580c">Lambda</text>
+
+              <!-- AI Lambda -->
+              <circle cx="370" cy="210" r="44" fill="white" stroke="#7c3aed" stroke-width="1.5"/>
+              <text x="370" y="203" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#6d28d9">2. AI</text>
+              <text x="370" y="217" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#7c3aed">Assistant</text>
+              <text x="370" y="229" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#9333ea">GPT-4 + tools</text>
+
+              <!-- Webhook Lambda -->
+              <circle cx="300" cy="350" r="40" fill="white" stroke="#059669" stroke-width="1.5"/>
+              <text x="300" y="343" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#065f46">3. Webhook</text>
+              <text x="300" y="357" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#16a34a">Sender</text>
+
+              <!-- DB Zone -->
+              <rect x="470" y="50" width="150" height="200" rx="10" fill="#fef2f2" stroke="#fca5a5" stroke-width="1.5" stroke-dasharray="6,4"/>
+              <text x="485" y="70" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#dc2626">🗄️ DB / Secrets</text>
+              <line x1="483" y1="88" x2="605" y2="88" stroke="#7c3aed" stroke-width="1.5"/>
+              <line x1="483" y1="130" x2="605" y2="130" stroke="#7c3aed" stroke-width="1.5"/>
+              <text x="544" y="108" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#6d28d9">Transactions DB</text>
+              <text x="544" y="122" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#7c3aed">RDS PostgreSQL</text>
+
+              <line x1="483" y1="155" x2="605" y2="155" stroke="#dc2626" stroke-width="1.5"/>
+              <line x1="483" y1="195" x2="605" y2="195" stroke="#dc2626" stroke-width="1.5"/>
+              <text x="544" y="172" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#dc2626">Secrets Manager</text>
+              <text x="544" y="188" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#ef4444">Stripe key, DB creds</text>
+
+              <!-- External Services -->
+              <rect x="470" y="270" width="150" height="160" rx="10" fill="#f5f3ff" stroke="#c4b5fd" stroke-width="1.5" stroke-dasharray="6,4"/>
+              <text x="485" y="290" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#7c3aed">📦 External Services</text>
+              <rect x="482" y="298" width="128" height="36" rx="0" fill="white" stroke="#374151" stroke-width="1"/>
+              <text x="546" y="320" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#374151">💳 Stripe API</text>
+              <rect x="482" y="344" width="128" height="36" rx="0" fill="white" stroke="#374151" stroke-width="1"/>
+              <text x="546" y="366" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#374151">🔐 Auth0</text>
+              <rect x="482" y="390" width="128" height="36" rx="0" fill="white" stroke="#374151" stroke-width="1"/>
+              <text x="546" y="412" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" fill="#374151">🌐 Merchant Webhooks</text>
+
+              <!-- Flows -->
+              <line x1="100" y1="129" x2="173" y2="110" stroke="#374151" stroke-width="1.5" marker-end="url(#ff)"/>
+              <line x1="100" y1="239" x2="173" y2="130" stroke="#374151" stroke-width="1.5" marker-end="url(#ff)"/>
+              <line x1="100" y1="349" x2="173" y2="110" stroke="#374151" stroke-width="1.5" marker-end="url(#ff)"/>
+              <line x1="285" y1="134" x2="235" y2="168" stroke="#374151" stroke-width="1.5" marker-end="url(#ff)"/>
+              <line x1="320" y1="115" x2="370" y2="168" stroke="#374151" stroke-width="1.5" marker-end="url(#ff)"/>
+              <line x1="274" y1="210" x2="326" y2="210" stroke="#374151" stroke-width="1.5" marker-end="url(#ff)"/>
+              <line x1="230" y1="254" x2="268" y2="312" stroke="#374151" stroke-width="1.5" marker-end="url(#ff)"/>
+              <line x1="274" y1="210" x2="470" y2="108" stroke="#374151" stroke-width="1.5" marker-end="url(#ff)"/>
+              <line x1="414" y1="210" x2="470" y2="108" stroke="#374151" stroke-width="1.5" marker-end="url(#ff)"/>
+              <line x1="230" y1="254" x2="470" y2="316" stroke="#374151" stroke-width="1.5" marker-end="url(#ff)"/>
+              <line x1="370" y1="254" x2="470" y2="316" stroke="#374151" stroke-width="1.5" marker-end="url(#ff)"/>
+              <line x1="338" y1="350" x2="470" y2="396" stroke="#374151" stroke-width="1.5" marker-end="url(#ff)"/>
+            </svg>
+            <div class="diagram-caption">FinFlow Reference DFD — compare with your team's diagram. Key differences to discuss: webhook trust boundary, AI assistant tool access, and CI/CD pipeline (not shown — deliberately omitted as a teaching point)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 3 -->
+    <div class="section" data-title="Phase 3: STRIDE Threat Identification">
+      <div class="phase-header">
+        <div class="phase-num">3</div>
+        <div>
+          <h3>Phase 3: STRIDE Threat Identification</h3>
+          <p>Apply STRIDE to the most critical components</p>
+        </div>
+        <span class="timer-badge">⏱️ 15 min</span>
+      </div>
+      <div class="phase-body">
+        <p style="font-size:14px;color:var(--gray-700);margin-bottom:16px">For each component below, identify at least 2 threats using STRIDE. Fill in the table:</p>
+
+        <div class="table-wrap" style="margin-bottom:16px">
+          <table>
+            <thead><tr><th>Component</th><th>STRIDE Category</th><th>Your Threat Description</th></tr></thead>
+            <tbody>
+              <tr><td>AI Assistant (Process 2) — with <code>trigger_refund()</code> tool</td><td></td><td style="min-width:220px;color:#9ca3af;font-style:italic">Write your threats here...</td></tr>
+              <tr><td>Webhook Sender (Process 3) — POST to merchant URLs</td><td></td><td style="color:#9ca3af;font-style:italic">Write your threats here...</td></tr>
+              <tr><td>Transactions DB — contains all payment records</td><td></td><td style="color:#9ca3af;font-style:italic">Write your threats here...</td></tr>
+              <tr><td>Merchant API Keys — stored in Secrets Manager</td><td></td><td style="color:#9ca3af;font-style:italic">Write your threats here...</td></tr>
+              <tr><td>OAuth Login (Auth0 flow)</td><td></td><td style="color:#9ca3af;font-style:italic">Write your threats here...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <button class="reveal-answer" onclick="this.nextElementSibling.classList.toggle('open'); this.textContent = this.nextElementSibling.classList.contains('open') ? '🔼 Hide Suggested Threats' : '🔽 Reveal Suggested Threats'">🔽 Reveal Suggested Threats</button>
+        <div class="answer-box">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Component</th><th>STRIDE</th><th>Threat</th><th>Risk</th></tr></thead>
+              <tbody>
+                <tr><td rowspan="3"><strong>AI Assistant + <code>trigger_refund()</code></strong></td><td><span class="badge badge-red">T · E</span></td><td>Indirect prompt injection via transaction note field tricks AI into triggering unauthorized refunds</td><td><span class="badge badge-red">Critical</span></td></tr>
+                <tr><td><span class="badge badge-blue">I</span></td><td>AI reads transaction history of ALL merchants (missing authorization check in tool call)</td><td><span class="badge badge-red">Critical</span></td></tr>
+                <tr><td><span class="badge badge-blue">D</span></td><td>Attacker floods AI endpoint with expensive queries, incurring massive GPT-4 API costs</td><td><span class="badge badge-orange">High</span></td></tr>
+                <tr><td rowspan="2"><strong>Webhook Sender</strong></td><td><span class="badge badge-red">S</span></td><td>Merchant URL changed to attacker's server — FinFlow sends payment data (amounts, customer emails) to attacker</td><td><span class="badge badge-red">Critical</span></td></tr>
+                <tr><td><span class="badge badge-red">T · E</span></td><td>SSRF: merchant configures webhook URL as <code>http://169.254.169.254/</code> — FinFlow's Lambda fetches AWS metadata</td><td><span class="badge badge-red">Critical</span></td></tr>
+                <tr><td rowspan="2"><strong>Transactions DB</strong></td><td><span class="badge badge-red">T</span></td><td>SQL injection via transaction search endpoint modifies payment amounts retroactively</td><td><span class="badge badge-red">Critical</span></td></tr>
+                <tr><td><span class="badge badge-blue">I</span></td><td>Lambda DB role has <code>SELECT *</code> on all tables — compromised Lambda exfiltrates all merchant data</td><td><span class="badge badge-red">Critical</span></td></tr>
+                <tr><td rowspan="2"><strong>Merchant API Keys</strong></td><td><span class="badge badge-blue">I</span></td><td>API key included in client-side JS bundle — leaked via browser DevTools</td><td><span class="badge badge-red">Critical</span></td></tr>
+                <tr><td><span class="badge badge-red">S</span></td><td>Leaked API key used to trigger payments on behalf of merchant without their knowledge</td><td><span class="badge badge-red">Critical</span></td></tr>
+                <tr><td rowspan="2"><strong>OAuth / Auth0 Flow</strong></td><td><span class="badge badge-red">S</span></td><td>Missing <code>state</code> parameter → CSRF attack logs merchant into attacker-controlled account</td><td><span class="badge badge-orange">High</span></td></tr>
+                <tr><td><span class="badge badge-blue">I</span></td><td>Access token stored in localStorage → XSS in dashboard steals token → full account takeover</td><td><span class="badge badge-orange">High</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 4 -->
+    <div class="section" data-title="Phase 4: Risk Scoring">
+      <div class="phase-header">
+        <div class="phase-num">4</div>
+        <div>
+          <h3>Phase 4: Risk Scoring & Prioritization</h3>
+          <p>Score your top 5 threats using DREAD and build a priority list</p>
+        </div>
+        <span class="timer-badge">⏱️ 10 min</span>
+      </div>
+      <div class="phase-body">
+        <p style="font-size:14px;color:var(--gray-700);margin-bottom:16px">Pick your top 5 threats from Phase 3. Score each using DREAD (1–3 per dimension) and determine priority.</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Threat</th><th>D</th><th>R</th><th>E</th><th>A</th><th>D</th><th>Total</th><th>Priority</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>Write your threat 1...</td>
+                <td style="text-align:center">—</td><td style="text-align:center">—</td><td style="text-align:center">—</td>
+                <td style="text-align:center">—</td><td style="text-align:center">—</td>
+                <td style="text-align:center;font-weight:700">?/15</td>
+                <td>?</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <button class="reveal-answer" onclick="this.nextElementSibling.classList.toggle('open'); this.textContent = this.nextElementSibling.classList.contains('open') ? '🔼 Hide Suggested Scores' : '🔽 Reveal Suggested Scores'">🔽 Reveal Suggested Scores</button>
+        <div class="answer-box">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Threat</th><th>D</th><th>R</th><th>E</th><th>A</th><th>D</th><th>Total</th><th>Priority</th></tr></thead>
+              <tbody>
+                <tr><td>Prompt injection → unauthorized refund via AI</td><td>3</td><td>2</td><td>2</td><td>2</td><td>2</td><td><strong>11/15</strong></td><td><span class="badge badge-red">Critical</span></td></tr>
+                <tr><td>SSRF via webhook URL → AWS metadata</td><td>3</td><td>3</td><td>2</td><td>3</td><td>2</td><td><strong>13/15</strong></td><td><span class="badge badge-red">Critical</span></td></tr>
+                <tr><td>SQL injection via search → data exfiltration</td><td>3</td><td>3</td><td>3</td><td>3</td><td>3</td><td><strong>15/15</strong></td><td><span class="badge badge-red">Critical</span></td></tr>
+                <tr><td>API key in client JS bundle</td><td>3</td><td>3</td><td>3</td><td>2</td><td>3</td><td><strong>14/15</strong></td><td><span class="badge badge-red">Critical</span></td></tr>
+                <tr><td>Missing OAuth state → CSRF account link</td><td>2</td><td>3</td><td>2</td><td>2</td><td>3</td><td><strong>12/15</strong></td><td><span class="badge badge-red">Critical</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout warning" style="margin-top:12px">
+            <div class="callout-icon">💬</div>
+            <div class="callout-body"><div class="callout-title">Discussion Point</div><div class="callout-text">Every top-5 threat scored as Critical. What does this tell us about the current security posture of FinFlow? Is this surprising given the architecture? Which one would you fix first and why?</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 5 -->
+    <div class="section" data-title="Phase 5: Mitigation Planning">
+      <div class="phase-header">
+        <div class="phase-num">5</div>
+        <div>
+          <h3>Phase 5: Mitigation Planning</h3>
+          <p>Design specific mitigations for your highest-priority threats</p>
+        </div>
+        <span class="timer-badge">⏱️ 10 min</span>
+      </div>
+      <div class="phase-body">
+        <p style="font-size:14px;color:var(--gray-700);margin-bottom:16px">For each Critical threat, propose a specific, implementable mitigation. Be concrete — not "add security" but "add X control that does Y."</p>
+
+        <button class="reveal-answer" onclick="this.nextElementSibling.classList.toggle('open'); this.textContent = this.nextElementSibling.classList.contains('open') ? '🔼 Hide Mitigations' : '🔽 Reveal Sample Mitigations'">🔽 Reveal Sample Mitigations</button>
+        <div class="answer-box">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Threat</th><th>Mitigation</th><th>Decision</th><th>Owner</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td><strong>Prompt injection → refund</strong></td>
+                  <td>Require human confirmation (merchant clicks "Approve" in dashboard) for ALL refunds triggered by AI. AI can only <em>recommend</em> refunds, not execute them. Separate refund confirmation from AI context.</td>
+                  <td>Mitigate</td>
+                  <td>AI team</td>
+                </tr>
+                <tr>
+                  <td><strong>SSRF via webhook URL</strong></td>
+                  <td>Validate webhook URLs against allowlist (HTTPS only, no private IP ranges, no AWS metadata). Use egress firewall on Lambda VPC to block 169.254.x.x, 10.x, 172.16.x, 192.168.x. Add delay + retry to webhook delivery to prevent timing attacks.</td>
+                  <td>Mitigate</td>
+                  <td>Infra team</td>
+                </tr>
+                <tr>
+                  <td><strong>SQL injection via search</strong></td>
+                  <td>Parameterized queries for all DB interactions (enforced via ORM/query builder). Enable pg_audit for query logging. Add integration test that attempts SQL injection and verifies it fails.</td>
+                  <td>Mitigate</td>
+                  <td>Backend team</td>
+                </tr>
+                <tr>
+                  <td><strong>API key in client bundle</strong></td>
+                  <td>Never expose API keys to frontend. All API calls from merchant dashboard go through FinFlow's own backend (BFF pattern). Merchant-facing API keys are server-side secrets only. Rotate any exposed keys immediately.</td>
+                  <td>Mitigate</td>
+                  <td>Frontend + Backend</td>
+                </tr>
+                <tr>
+                  <td><strong>Missing OAuth state</strong></td>
+                  <td>Add cryptographically random 256-bit state parameter to Auth0 authorization request. Validate state on callback before exchanging code for token. Auth0 SDK handles this if configured correctly — verify configuration in code review.</td>
+                  <td>Mitigate</td>
+                  <td>Auth team</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 6 — Debrief -->
+    <div class="section" data-title="Debrief & Reflection">
+      <div class="phase-header">
+        <div class="phase-num">6</div>
+        <div>
+          <h3>Phase 6: Debrief & Reflection</h3>
+          <p>Compare findings across groups and extract lessons</p>
+        </div>
+        <span class="timer-badge">⏱️ 10 min</span>
+      </div>
+      <div class="phase-body">
+        <h3 class="subsection" style="margin-top:0">Discussion Questions for the Instructor</h3>
+        <ol class="styled">
+          <li>Which group found the most threats? What did others miss? Why?</li>
+          <li>Did any group find the <strong>CI/CD pipeline</strong> as a threat vector? (It wasn't in the DFD — what does that tell us about scope?)</li>
+          <li>The AI assistant has access to <em>all merchants' transaction data</em> via its tool. Is this a design flaw or a configuration problem? How would you redesign it?</li>
+          <li>Which threat would have the biggest business impact if exploited? Why?</li>
+          <li>What would need to change in FinFlow's architecture to achieve PCI DSS compliance?</li>
+        </ol>
+
+        <div class="callout tip" style="margin-top:20px">
+          <div class="callout-icon">💡</div>
+          <div class="callout-body"><div class="callout-title">Key Insight: Missed Threats Are Normal</div><div class="callout-text">Real threat modeling always misses some threats — that's why it's combined with penetration testing and continuous monitoring. The goal isn't perfection: it's <strong>dramatically reducing the most likely high-impact attacks</strong> before they're discovered by attackers. A threat model that finds and mitigates 80% of Critical threats is enormously valuable.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Completion -->
+    <div class="section" data-title="Congratulations">
+      <h2 class="section-title"><span class="section-num">🏆</span>Course Complete!</h2>
+
+      <div style="text-align:center; padding:40px 0">
+        <div style="font-size:72px; margin-bottom:16px">🎓</div>
+        <h2 style="font-size:28px; font-weight:800; color:var(--gray-900); margin-bottom:12px">You've completed the Threat Modeling Guide</h2>
+        <p style="font-size:16px; color:var(--gray-500); max-width:540px; margin:0 auto 32px">From the basics of what a threat model is, through STRIDE, DFDs, and real-world applications — you can now threat model basic apps, web APIs, cloud architectures, and AI agentic systems.</p>
+      </div>
+
+      <div class="callout success">
+        <div class="callout-icon">✅</div>
+        <div class="callout-body">
+          <div class="callout-title">You Can Now:</div>
+          <div class="callout-text">
+            <ul class="styled" style="margin-top:8px">
+              <li>Answer the four questions of threat modeling for any system</li>
+              <li>Draw a Data Flow Diagram with correct elements and trust boundaries</li>
+              <li>Apply STRIDE per element to generate a complete threat list</li>
+              <li>Score threats using DREAD and prioritize with a risk matrix</li>
+              <li>Make explicit mitigation decisions and document residual risk</li>
+              <li>Threat model basic CRUD apps, REST APIs, OAuth flows, and microservices</li>
+              <li>Apply cloud-specific security thinking (shared responsibility, IAM, SSRF)</li>
+              <li>Recognize and defend against prompt injection in agentic AI systems</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="subsection">Recommended Next Steps</h3>
+      <div class="card-grid">
+        <div class="card primary">
+          <div class="card-icon">📚</div>
+          <div class="card-title">Read</div>
+          <div class="card-desc">"Threat Modeling: Designing for Security" by Adam Shostack — the definitive book on the topic</div>
+        </div>
+        <div class="card accent">
+          <div class="card-icon">🛠️</div>
+          <div class="card-title">Practice</div>
+          <div class="card-desc">Threat model your current project at work. Start with one feature, not the whole system</div>
+        </div>
+        <div class="card success">
+          <div class="card-icon">🌐</div>
+          <div class="card-title">Community</div>
+          <div class="card-desc">OWASP Threat Modeling resources, OWASP Cornucopia cards for threat brainstorming</div>
+        </div>
+        <div class="card warning">
+          <div class="card-icon">🏆</div>
+          <div class="card-title">Certifications</div>
+          <div class="card-desc">OSCP, AWS Security Specialty, CISSP — all build on what you've learned here</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-nav">
+      <a class="page-nav-link" href="09-risk-mitigation.html"><span class="nav-dir">← Back</span>Risk Scoring & Mitigation</a>
+      <a class="page-nav-link" href="../index.html"><span class="nav-dir">↩ Home</span>Course Overview</a>
+    </div>
+  </main>
+</div>
+
+<div class="present-toolbar">
+  <button id="prev-slide">◀</button>
+  <span class="slide-counter" id="slide-counter">1 / 7</span>
+  <button id="next-slide">▶</button>
+  <div class="divider"></div>
+  <button id="exit-present">✕</button>
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+// Reveal answer toggles
+document.querySelectorAll('.reveal-answer').forEach(btn => {
+  // already handled via onclick in HTML
+});
+</script>
+</body>
+</html>

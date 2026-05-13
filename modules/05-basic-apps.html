@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>M5: Basic Applications — Threat Modeling Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo"><div class="logo-icon">🛡️</div><span>Threat Modeling<small>Teaching Guide</small></span></div>
+  <div class="progress-bar-wrap"><div class="progress-label"><span>Progress</span><span id="progress-pct">0%</span></div><div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div></div>
+  <nav class="sidebar-nav">
+    <div class="nav-section"><div class="nav-section-title">Home</div><a class="nav-item" href="../index.html"><span class="nav-icon">🏠</span>Course Overview</a></div>
+    <div class="nav-section">
+      <div class="nav-section-title">Part 1 — Foundations</div>
+      <a class="nav-item" href="01-introduction.html"><span class="nav-icon">🌱</span>What is Threat Modeling?<span class="nav-badge">M1</span></a>
+      <a class="nav-item" href="02-core-concepts.html"><span class="nav-icon">🔑</span>Core Concepts<span class="nav-badge">M2</span></a>
+      <a class="nav-item" href="03-stride.html"><span class="nav-icon">⚡</span>STRIDE Framework<span class="nav-badge">M3</span></a>
+      <a class="nav-item" href="04-process.html"><span class="nav-icon">🔄</span>The TM Process<span class="nav-badge">M4</span></a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Part 2 — Application TM</div>
+      <a class="nav-item active" href="05-basic-apps.html"><span class="nav-icon">💻</span>Basic Applications<span class="nav-badge">M5</span></a>
+      <a class="nav-item" href="06-web-apps.html"><span class="nav-icon">🌐</span>Web Applications<span class="nav-badge">M6</span></a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Part 3 — Modern Architectures</div>
+      <a class="nav-item" href="07-cloud.html"><span class="nav-icon">☁️</span>Cloud Architecture<span class="nav-badge">M7</span></a>
+      <a class="nav-item" href="08-agentic.html"><span class="nav-icon">🤖</span>AI Agentic Systems<span class="nav-badge">M8</span></a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Part 4 — Advanced</div>
+      <a class="nav-item" href="09-risk-mitigation.html"><span class="nav-icon">🛡️</span>Risk & Mitigation<span class="nav-badge">M9</span></a>
+      <a class="nav-item" href="10-capstone.html"><span class="nav-icon">🏆</span>Capstone Exercise<span class="nav-badge">M10</span></a>
+    </div>
+  </nav>
+  <div class="sidebar-footer">Threat Modeling Guide · v1.0</div>
+</aside>
+
+<div class="main-wrap">
+  <header class="top-bar">
+    <button class="hamburger" id="hamburger">☰</button>
+    <span class="top-bar-title">Module 5 — Basic Applications</span>
+    <div class="top-bar-actions">
+      <span class="live-badge" id="live-badge" style="display:none"><span class="live-dot"></span> LIVE</span>
+      <button class="btn btn-present" id="btn-present">🎬 Present</button>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="page-header">
+      <div class="module-tag blue">💻 Module 5 · Application TM</div>
+      <h1 class="page-title">Threat Modeling Basic Applications</h1>
+      <p class="page-subtitle">Put the process into practice on a simple, realistic application — a task management CRUD app with user accounts. We'll build the full threat model end to end.</p>
+    </div>
+
+    <div class="objectives-card">
+      <h3>🎯 Learning Objectives</h3>
+      <ul>
+        <li>Draw the complete DFD for a simple CRUD web app</li>
+        <li>Identify the most common application-level threats by category</li>
+        <li>Understand authentication and session management attack patterns</li>
+        <li>Map OWASP top vulnerabilities to STRIDE categories</li>
+        <li>Define mitigations for each identified threat</li>
+      </ul>
+    </div>
+
+    <!-- Section 1 -->
+    <div class="section" data-title="Our Example App">
+      <h2 class="section-title"><span class="section-num">1</span>The Example Application</h2>
+      <p>We'll threat model <strong>"TaskFlow"</strong> — a simple task management app. It's deliberately minimal to keep the focus on threat modeling mechanics. But it contains all the patterns you'll see in any production application.</p>
+
+      <div class="card-grid">
+        <div class="card">
+          <div class="card-icon">👤</div>
+          <div class="card-title">Users</div>
+          <div class="card-desc">Register with email + password. Log in/out. Each user sees only their own tasks.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">✅</div>
+          <div class="card-title">Tasks</div>
+          <div class="card-desc">CRUD operations: create, read, update, delete tasks. Tasks belong to a single user.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">🔔</div>
+          <div class="card-title">Notifications</div>
+          <div class="card-desc">Email reminders for due tasks. Uses a third-party email service (SendGrid).</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">🗄️</div>
+          <div class="card-title">Storage</div>
+          <div class="card-desc">PostgreSQL database. Users table and Tasks table. Hosted on a cloud VPS.</div>
+        </div>
+      </div>
+
+      <div class="callout info">
+        <div class="callout-icon">🏗️</div>
+        <div class="callout-body">
+          <div class="callout-title">Tech Stack (for context)</div>
+          <div class="callout-text">Node.js + Express API · React frontend · PostgreSQL · JWT sessions · SendGrid email · Nginx reverse proxy · Hosted on a single VPS. This is typical of a startup MVP.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2 — DFD -->
+    <div class="section" data-title="TaskFlow DFD">
+      <h2 class="section-title"><span class="section-num">2</span>The TaskFlow DFD</h2>
+      <p>Let's draw the architecture. The goal is to see every <strong>data flow</strong> and every <strong>trust boundary</strong>:</p>
+
+      <div class="diagram-wrap">
+        <div class="diagram-title">TaskFlow — Full Data Flow Diagram</div>
+        <svg viewBox="0 0 720 420" width="100%" style="max-width:720px">
+          <defs>
+            <marker id="ta" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+              <polygon points="0 0, 8 3, 0 6" fill="#374151"/>
+            </marker>
+          </defs>
+
+          <!-- Internet zone -->
+          <rect x="8" y="8" width="704" height="404" rx="14" fill="#fff7ed" stroke="#fed7aa" stroke-width="1.5" stroke-dasharray="10,5"/>
+          <text x="26" y="30" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#c2410c">🌐 Internet (Untrusted)</text>
+
+          <!-- User (browser) -->
+          <rect x="28" y="160" width="96" height="76" rx="0" fill="white" stroke="#374151" stroke-width="2"/>
+          <text x="76" y="190" text-anchor="middle" font-family="Inter,sans-serif" font-size="22">👤</text>
+          <text x="76" y="212" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#374151">Browser</text>
+          <text x="76" y="227" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#6b7280">React SPA</text>
+
+          <!-- Trust boundary: App zone -->
+          <rect x="185" y="45" width="360" height="340" rx="10" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="6,4"/>
+          <text x="200" y="65" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#15803d">✅ App Server (VPS)</text>
+
+          <!-- Nginx -->
+          <rect x="200" y="82" width="120" height="60" rx="8" fill="white" stroke="#22c55e" stroke-width="1.5"/>
+          <text x="260" y="107" text-anchor="middle" font-family="Inter,sans-serif" font-size="13">🔀</text>
+          <text x="260" y="125" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="600" fill="#374151">Nginx</text>
+          <text x="260" y="137" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#6b7280">Reverse proxy / TLS</text>
+
+          <!-- Auth service -->
+          <circle cx="290" cy="230" r="55" fill="white" stroke="#2563eb" stroke-width="2"/>
+          <text x="290" y="220" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="700" fill="#1d4ed8">1. Auth</text>
+          <text x="290" y="236" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#3b82f6">Service</text>
+          <text x="290" y="252" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#60a5fa">JWT issue/verify</text>
+
+          <!-- Tasks API -->
+          <circle cx="430" cy="230" r="55" fill="white" stroke="#2563eb" stroke-width="2"/>
+          <text x="430" y="220" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="700" fill="#1d4ed8">2. Tasks</text>
+          <text x="430" y="236" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#3b82f6">API</text>
+          <text x="430" y="252" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#60a5fa">CRUD + authorization</text>
+
+          <!-- Notification service -->
+          <circle cx="360" cy="350" r="42" fill="white" stroke="#2563eb" stroke-width="1.5"/>
+          <text x="360" y="342" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#1d4ed8">3. Notify</text>
+          <text x="360" y="358" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#60a5fa">Email scheduler</text>
+
+          <!-- DB zone -->
+          <rect x="565" y="45" width="145" height="220" rx="10" fill="#fef2f2" stroke="#fca5a5" stroke-width="1.5" stroke-dasharray="6,4"/>
+          <text x="580" y="65" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#dc2626">🗄️ DB Zone</text>
+
+          <!-- Users DB -->
+          <line x1="578" y1="95" x2="698" y2="95" stroke="#7c3aed" stroke-width="2"/>
+          <line x1="578" y1="135" x2="698" y2="135" stroke="#7c3aed" stroke-width="2"/>
+          <text x="638" y="113" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="600" fill="#6d28d9">Users</text>
+          <text x="638" y="128" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#7c3aed">email, pw_hash, id</text>
+
+          <!-- Tasks DB -->
+          <line x1="578" y1="165" x2="698" y2="165" stroke="#7c3aed" stroke-width="2"/>
+          <line x1="578" y1="205" x2="698" y2="205" stroke="#7c3aed" stroke-width="2"/>
+          <text x="638" y="182" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="600" fill="#6d28d9">Tasks</text>
+          <text x="638" y="198" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#7c3aed">id, user_id, title, due</text>
+
+          <!-- External zone -->
+          <rect x="565" y="280" width="145" height="100" rx="10" fill="#f5f3ff" stroke="#c4b5fd" stroke-width="1.5" stroke-dasharray="6,4"/>
+          <text x="580" y="300" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#7c3aed">📦 External</text>
+          <rect x="578" y="310" width="110" height="50" rx="0" fill="white" stroke="#374151" stroke-width="1.5"/>
+          <text x="633" y="333" text-anchor="middle" font-family="Inter,sans-serif" font-size="12">📧</text>
+          <text x="633" y="350" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="600" fill="#374151">SendGrid</text>
+
+          <!-- Flows -->
+          <!-- Browser → Nginx HTTPS -->
+          <line x1="124" y1="195" x2="198" y2="115" stroke="#374151" stroke-width="1.5" marker-end="url(#ta)"/>
+          <text x="145" y="148" font-family="Inter,sans-serif" font-size="10" fill="#374151" transform="rotate(-38,145,148)">HTTPS requests</text>
+
+          <!-- Nginx → Auth -->
+          <line x1="242" y1="142" x2="280" y2="176" stroke="#374151" stroke-width="1.5" marker-end="url(#ta)"/>
+          <text x="244" y="167" font-family="Inter,sans-serif" font-size="9" fill="#374151">/auth/*</text>
+
+          <!-- Nginx → Tasks -->
+          <line x1="320" y1="120" x2="400" y2="180" stroke="#374151" stroke-width="1.5" marker-end="url(#ta)"/>
+          <text x="360" y="145" font-family="Inter,sans-serif" font-size="9" fill="#374151">/tasks/*</text>
+
+          <!-- Auth → JWT response → Browser -->
+          <line x1="236" y1="212" x2="124" y2="198" stroke="#374151" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#ta)"/>
+          <text x="165" y="198" font-family="Inter,sans-serif" font-size="9" fill="#374151">JWT token</text>
+
+          <!-- Auth → Users DB -->
+          <line x1="343" y1="200" x2="576" y2="115" stroke="#374151" stroke-width="1.5" marker-end="url(#ta)"/>
+          <text x="460" y="148" font-family="Inter,sans-serif" font-size="9" fill="#374151">lookup/create</text>
+
+          <!-- Tasks API → Tasks DB -->
+          <line x1="483" y1="205" x2="576" y2="185" stroke="#374151" stroke-width="1.5" marker-end="url(#ta)"/>
+          <text x="530" y="188" font-family="Inter,sans-serif" font-size="9" fill="#374151">CRUD</text>
+
+          <!-- Tasks API → Notify -->
+          <line x1="420" y1="284" x2="400" y2="310" stroke="#374151" stroke-width="1.5" marker-end="url(#ta)"/>
+          <text x="430" y="302" font-family="Inter,sans-serif" font-size="9" fill="#374151">schedule</text>
+
+          <!-- Notify → SendGrid -->
+          <line x1="390" y1="360" x2="576" y2="340" stroke="#374151" stroke-width="1.5" marker-end="url(#ta)"/>
+          <text x="480" y="348" font-family="Inter,sans-serif" font-size="9" fill="#374151">send email</text>
+
+          <!-- Auth ↔ Tasks (JWT verify) -->
+          <line x1="344" y1="230" x2="374" y2="230" stroke="#374151" stroke-width="1.5" marker-end="url(#ta)"/>
+          <text x="358" y="222" font-family="Inter,sans-serif" font-size="9" fill="#374151">verify JWT</text>
+        </svg>
+        <div class="diagram-caption">TaskFlow's complete DFD — three trust zones, three processes, two data stores, and one external entity</div>
+      </div>
+    </div>
+
+    <!-- Section 3 — Authentication threats -->
+    <div class="section" data-title="Authentication Threats">
+      <h2 class="section-title"><span class="section-num">3</span>Authentication Threats (Process 1)</h2>
+
+      <div class="threat-item">
+        <div class="threat-icon">🎭</div>
+        <div class="threat-content">
+          <div class="threat-title">T-01 — Credential Stuffing [STRIDE: Spoofing]</div>
+          <div class="threat-desc">Attacker uses credential dumps from other breaches to try username/password pairs at scale. The auth service will happily accept valid stolen credentials.</div>
+          <div class="threat-tags"><span class="badge badge-red">Critical</span><span class="badge badge-blue">Spoofing</span></div>
+        </div>
+      </div>
+      <div class="callout success" style="margin: 0 0 16px">
+        <div class="callout-icon">🛡️</div>
+        <div class="callout-body"><div class="callout-title">Mitigations</div><div class="callout-text">TOTP-based MFA · bcrypt/Argon2 password hashing (slow hash → defeats stuffing rate) · Bot detection (CAPTCHA after 3 fails) · Notify user of new login location · Check credentials against HaveIBeenPwned API on login</div></div>
+      </div>
+
+      <div class="threat-item">
+        <div class="threat-icon">🔑</div>
+        <div class="threat-content">
+          <div class="threat-title">T-02 — Weak JWT Secret [STRIDE: Tampering + Elevation of Privilege]</div>
+          <div class="threat-desc">If the JWT signing secret is too short or predictable, an attacker can brute-force it offline, then forge tokens with arbitrary claims (e.g., admin role, different user_id).</div>
+          <div class="threat-tags"><span class="badge badge-red">Critical</span><span class="badge badge-red">Tampering</span><span class="badge badge-purple">Elevation</span></div>
+        </div>
+      </div>
+      <div class="callout success" style="margin: 0 0 16px">
+        <div class="callout-icon">🛡️</div>
+        <div class="callout-body"><div class="callout-title">Mitigations</div><div class="callout-text">256-bit cryptographically random JWT secret stored in a secrets manager (never in code/env file) · Prefer RS256 (asymmetric) over HS256 · Short token expiry (15 min access + refresh token rotation)</div></div>
+      </div>
+
+      <div class="threat-item medium">
+        <div class="threat-icon">🍪</div>
+        <div class="threat-content">
+          <div class="threat-title">T-03 — JWT Stored in localStorage [STRIDE: Information Disclosure]</div>
+          <div class="threat-desc">React SPA stores JWT in localStorage — accessible to any JavaScript on the page. An XSS vulnerability in any dependency can steal the token and give the attacker a persistent session.</div>
+          <div class="threat-tags"><span class="badge badge-orange">High</span><span class="badge badge-blue">Info Disclosure</span></div>
+        </div>
+      </div>
+      <div class="callout success" style="margin: 0 0 24px">
+        <div class="callout-icon">🛡️</div>
+        <div class="callout-body"><div class="callout-title">Mitigations</div><div class="callout-text">Store JWT in HttpOnly + Secure + SameSite=Strict cookie instead of localStorage · Add Content-Security-Policy headers · Subresource Integrity (SRI) for all third-party scripts</div></div>
+      </div>
+    </div>
+
+    <!-- Section 4 — Authorization -->
+    <div class="section" data-title="Authorization (IDOR) Threats">
+      <h2 class="section-title"><span class="section-num">4</span>Authorization Threats (Process 2 — Tasks API)</h2>
+
+      <div class="callout danger">
+        <div class="callout-icon">🚨</div>
+        <div class="callout-body">
+          <div class="callout-title">The #1 App-Level Vulnerability: IDOR</div>
+          <div class="callout-text"><strong>Insecure Direct Object Reference (IDOR)</strong> is the most common authorization failure in CRUD apps. It happens when the API trusts user-supplied IDs without verifying ownership. Example: <code>GET /api/tasks/42</code> — does the server check that task 42 belongs to the authenticated user? If not, any logged-in user can read anyone's tasks.</div>
+        </div>
+      </div>
+
+      <div class="threat-item">
+        <div class="threat-icon">👀</div>
+        <div class="threat-content">
+          <div class="threat-title">T-04 — IDOR: Read Other Users' Tasks [STRIDE: Info Disclosure + Elevation]</div>
+          <div class="threat-desc">Authenticated attacker changes the task ID in the URL from their own (e.g., 42) to another user's (e.g., 43). If the API doesn't check <code>task.user_id === jwt.user_id</code>, they get full read access to another user's data.</div>
+          <div class="threat-tags"><span class="badge badge-red">Critical</span><span class="badge badge-blue">Info Disclosure</span><span class="badge badge-purple">Elevation</span></div>
+        </div>
+      </div>
+      <pre>// ❌ Vulnerable
+app.get('/api/tasks/:id', auth, async (req, res) => {
+  const task = await db.query('SELECT * FROM tasks WHERE id = $1', [req.params.id]);
+  res.json(task);  // Missing: check task.user_id === req.user.id
+});
+
+// ✅ Fixed
+app.get('/api/tasks/:id', auth, async (req, res) => {
+  const task = await db.query(
+    'SELECT * FROM tasks WHERE id = $1 AND user_id = $2',
+    [req.params.id, req.user.id]  // Ownership enforced in query
+  );
+  if (!task) return res.status(404).json({ error: 'Not found' });
+  res.json(task);
+});</pre>
+
+      <div class="threat-item medium">
+        <div class="threat-icon">💉</div>
+        <div class="threat-content">
+          <div class="threat-title">T-05 — SQL Injection via Task Title [STRIDE: Tampering + Info Disclosure]</div>
+          <div class="threat-desc">If the task title field is inserted directly into a SQL query string, an attacker submits <code>'; DROP TABLE tasks; --</code> or <code>' OR '1'='1</code> to extract or destroy data.</div>
+          <div class="threat-tags"><span class="badge badge-red">Critical</span><span class="badge badge-red">Tampering</span></div>
+        </div>
+      </div>
+      <pre>// ❌ Vulnerable
+const query = `INSERT INTO tasks (title) VALUES ('${req.body.title}')`;
+
+// ✅ Fixed — parameterized query
+const query = await db.query('INSERT INTO tasks (title, user_id) VALUES ($1, $2)',
+  [req.body.title, req.user.id]);
+</pre>
+    </div>
+
+    <!-- Section 5 — Data Store threats -->
+    <div class="section" data-title="Data Store Threats">
+      <h2 class="section-title"><span class="section-num">5</span>Data Store Threats</h2>
+
+      <div class="threat-item">
+        <div class="threat-icon">🔓</div>
+        <div class="threat-content">
+          <div class="threat-title">T-06 — Plaintext Passwords in DB [STRIDE: Information Disclosure]</div>
+          <div class="threat-desc">If the database is breached and passwords are stored in plaintext (or with weak MD5 hashing), every user account is immediately compromised. Attackers sell these on dark markets within hours.</div>
+          <div class="threat-tags"><span class="badge badge-red">Critical</span><span class="badge badge-blue">Info Disclosure</span></div>
+        </div>
+      </div>
+      <div class="callout success" style="margin:0 0 16px">
+        <div class="callout-icon">🛡️</div>
+        <div class="callout-body"><div class="callout-title">Mitigations</div><div class="callout-text">Always hash passwords with <strong>bcrypt</strong> (cost factor 12+) or <strong>Argon2id</strong>. Never MD5, SHA-1, or SHA-256 alone — these are too fast. Salt is automatically included in bcrypt. Store only the hash, never the plaintext.</div></div>
+      </div>
+
+      <div class="threat-item medium">
+        <div class="threat-icon">🌐</div>
+        <div class="threat-content">
+          <div class="threat-title">T-07 — DB Exposed to Internet [STRIDE: Denial of Service + Info Disclosure]</div>
+          <div class="threat-desc">PostgreSQL running on default port 5432 exposed to the internet. Attackers scan for exposed databases continuously. Direct database attacks or brute-force connection attempts.</div>
+          <div class="threat-tags"><span class="badge badge-red">High</span><span class="badge badge-blue">Info Disclosure</span><span class="badge badge-blue">DoS</span></div>
+        </div>
+      </div>
+      <div class="callout success" style="margin:0 0 24px">
+        <div class="callout-icon">🛡️</div>
+        <div class="callout-body"><div class="callout-title">Mitigations</div><div class="callout-text">Bind PostgreSQL to localhost only (<code>listen_addresses = 'localhost'</code> in postgresql.conf). Firewall rules: no inbound access on port 5432. App server connects via Unix socket or localhost only.</div></div>
+      </div>
+    </div>
+
+    <!-- Section 6 — Notification threats -->
+    <div class="section" data-title="External Service Threats">
+      <h2 class="section-title"><span class="section-num">6</span>External Service Threats (Process 3 + SendGrid)</h2>
+
+      <div class="threat-item medium">
+        <div class="threat-icon">🗝️</div>
+        <div class="threat-content">
+          <div class="threat-title">T-08 — SendGrid API Key Exposure [STRIDE: Spoofing]</div>
+          <div class="threat-desc">The SendGrid API key is hardcoded in the source code or committed to a public GitHub repo. Attacker finds it, uses it to send phishing emails from the app's domain — destroying email reputation.</div>
+          <div class="threat-tags"><span class="badge badge-orange">High</span><span class="badge badge-red">Spoofing</span></div>
+        </div>
+      </div>
+      <div class="callout success" style="margin:0 0 16px">
+        <div class="callout-icon">🛡️</div>
+        <div class="callout-body"><div class="callout-title">Mitigations</div><div class="callout-text">Store API keys in environment variables or secrets manager (AWS Secrets Manager, HashiCorp Vault, etc.). Never commit secrets. Add <code>.env</code> to <code>.gitignore</code>. Use <code>git-secrets</code> or similar pre-commit hooks to catch accidental commits.</div></div>
+      </div>
+    </div>
+
+    <!-- Full Threat Summary -->
+    <div class="section" data-title="Full Threat Table">
+      <h2 class="section-title"><span class="section-num">7</span>Full Threat Table — TaskFlow</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Component</th><th>STRIDE</th><th>Threat</th><th>Risk</th><th>Decision</th></tr></thead>
+          <tbody>
+            <tr><td>T-01</td><td>Auth Service</td><td><span class="badge badge-red">S</span></td><td>Credential Stuffing</td><td><span class="badge badge-red">Critical</span></td><td>Mitigate: MFA + bot detection</td></tr>
+            <tr><td>T-02</td><td>JWT Signing</td><td><span class="badge badge-red">T+E</span></td><td>Weak JWT secret → token forgery</td><td><span class="badge badge-red">Critical</span></td><td>Mitigate: 256-bit secret, RS256</td></tr>
+            <tr><td>T-03</td><td>Frontend (SPA)</td><td><span class="badge badge-blue">I</span></td><td>JWT in localStorage → XSS theft</td><td><span class="badge badge-orange">High</span></td><td>Mitigate: HttpOnly cookie</td></tr>
+            <tr><td>T-04</td><td>Tasks API</td><td><span class="badge badge-blue">I+E</span></td><td>IDOR: access other users' tasks</td><td><span class="badge badge-red">Critical</span></td><td>Mitigate: ownership check in query</td></tr>
+            <tr><td>T-05</td><td>Tasks API</td><td><span class="badge badge-red">T</span></td><td>SQL Injection via task title</td><td><span class="badge badge-red">Critical</span></td><td>Mitigate: parameterized queries</td></tr>
+            <tr><td>T-06</td><td>Users DB</td><td><span class="badge badge-blue">I</span></td><td>Plaintext passwords</td><td><span class="badge badge-red">Critical</span></td><td>Mitigate: bcrypt/Argon2id</td></tr>
+            <tr><td>T-07</td><td>Database</td><td><span class="badge badge-blue">D+I</span></td><td>DB exposed to internet</td><td><span class="badge badge-orange">High</span></td><td>Mitigate: localhost-only binding</td></tr>
+            <tr><td>T-08</td><td>Notify → SendGrid</td><td><span class="badge badge-red">S</span></td><td>API key hardcoded in code</td><td><span class="badge badge-orange">High</span></td><td>Mitigate: secrets manager</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Exercise -->
+    <div class="section" data-title="Exercise">
+      <h2 class="section-title"><span class="section-num">8</span>Your Turn — Spot the Threat</h2>
+
+      <div class="exercise-card"
+           data-correct="B"
+           data-feedback-correct="Correct! This is a classic IDOR (Insecure Direct Object Reference) — an authorization failure categorized as Elevation of Privilege (and Information Disclosure). The fix is always to verify ownership server-side."
+           data-feedback-wrong="Look at what's happening: an authenticated user is accessing data that belongs to someone else. What STRIDE category covers unauthorized access to resources beyond your permission level?">
+        <div class="exercise-label">✏️ Exercise 5.1</div>
+        <div class="exercise-title">Identify this vulnerability</div>
+        <div class="exercise-text">A logged-in user sends <code>GET /api/tasks/99</code>. Task #99 belongs to a different user. The API returns it without error. What STRIDE category does this represent?</div>
+        <div class="exercise-options">
+          <button class="option-btn" data-value="A"><span class="opt-letter">A</span>Spoofing — the user is pretending to be someone else</button>
+          <button class="option-btn" data-value="B"><span class="opt-letter">B</span>Elevation of Privilege — accessing resources beyond granted permissions</button>
+          <button class="option-btn" data-value="C"><span class="opt-letter">C</span>Repudiation — the system has no log of this access</button>
+          <button class="option-btn" data-value="D"><span class="opt-letter">D</span>Denial of Service — flooding the tasks endpoint</button>
+        </div>
+        <div class="exercise-feedback"></div>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="section" data-title="Summary">
+      <h2 class="section-title"><span class="section-num">9</span>Module Summary</h2>
+      <div class="callout success">
+        <div class="callout-icon">✅</div>
+        <div class="callout-body">
+          <div class="callout-title">Key Takeaways</div>
+          <div class="callout-text">
+            <ul class="styled" style="margin-top:8px">
+              <li><strong>Authentication</strong>: hash passwords (bcrypt), short JWTs, HttpOnly cookies, MFA</li>
+              <li><strong>Authorization</strong>: always verify ownership server-side — IDOR is the #1 app-level failure</li>
+              <li><strong>SQL injection</strong>: parameterized queries — always, no exceptions</li>
+              <li><strong>Secrets</strong>: never in source code — use environment variables or secrets managers</li>
+              <li><strong>Network</strong>: databases should never be directly reachable from the internet</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-nav">
+      <a class="page-nav-link" href="04-process.html"><span class="nav-dir">← Back</span>The TM Process</a>
+      <a class="page-nav-link" href="06-web-apps.html"><span class="nav-dir">Next →</span>Web Applications & APIs</a>
+    </div>
+  </main>
+</div>
+
+<div class="present-toolbar">
+  <button id="prev-slide">◀</button>
+  <span class="slide-counter" id="slide-counter">1 / 9</span>
+  <button id="next-slide">▶</button>
+  <div class="divider"></div>
+  <button id="exit-present">✕</button>
+</div>
+
+<script src="../js/app.js"></script>
+</body>
+</html>
