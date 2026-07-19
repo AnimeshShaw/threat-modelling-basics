@@ -1,9 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="auto">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Threat Modeling Guide — From Basics to Intermediate</title>
+<title>Threat Modeling Guide — From Basics to Cloud & AI Architectures</title>
+<meta name="description" content="A modern 10-module interactive guide to threat modeling software applications, cloud architectures, and AI agentic systems." />
+
+<!-- OpenGraph / Social Meta -->
+<meta property="og:title" content="Threat Modeling Guide — Interactive Security Curriculum" />
+<meta property="og:description" content="Master STRIDE, DFDs, Cloud Security, and AI Agentic Threat Modeling with interactive exercises and presentation mode." />
+<meta property="og:type" content="website" />
+
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
@@ -63,7 +70,7 @@
     gap: 18px; padding: 40px 48px;
   }
   .module-card {
-    background: white; border: 1px solid var(--gray-200);
+    background: var(--bg-card); border: 1px solid var(--border-color);
     border-radius: var(--radius-lg); padding: 26px;
     text-decoration: none; color: inherit;
     transition: var(--transition); display: flex; flex-direction: column;
@@ -74,16 +81,16 @@
     position: absolute; top: 0; left: 0; right: 0; height: 4px;
   }
   .module-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-3px); }
-  .module-card-num { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--gray-400); margin-bottom: 10px; }
+  .module-card-num { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; }
   .module-card-icon { font-size: 36px; margin-bottom: 14px; }
-  .module-card-title { font-size: 17px; font-weight: 700; color: var(--gray-900); margin-bottom: 8px; }
-  .module-card-desc { font-size: 13px; color: var(--gray-500); line-height: 1.6; flex: 1; }
-  .module-card-meta { display: flex; gap: 12px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--gray-100); }
+  .module-card-title { font-size: 17px; font-weight: 700; color: var(--text-heading); margin-bottom: 8px; }
+  .module-card-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; flex: 1; }
+  .module-card-meta { display: flex; gap: 12px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border-color); }
   .module-card-tag { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 10px; }
-  .tag-beginner { background: #dcfce7; color: #166534; }
-  .tag-intermediate { background: #fef9c3; color: #713f12; }
-  .tag-advanced { background: #fce7f3; color: #9d174d; }
-  .tag-mins { background: var(--gray-100); color: var(--gray-600); }
+  .tag-beginner { background: var(--success-light); color: var(--success); }
+  .tag-intermediate { background: var(--warning-light); color: var(--warning); }
+  .tag-advanced { background: var(--danger-light); color: var(--danger); }
+  .tag-mins { background: var(--gray-100); color: var(--text-muted); }
 
   .m1::before { background: linear-gradient(90deg, #2563eb, #7c3aed); }
   .m2::before { background: linear-gradient(90deg, #7c3aed, #db2777); }
@@ -97,7 +104,7 @@
   .m10::before { background: linear-gradient(90deg, #0f172a, #4f46e5); }
 
   .section-divider { padding: 12px 48px 8px; }
-  .section-divider h2 { font-size: 13px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--gray-400); padding-bottom: 10px; border-bottom: 1px solid var(--gray-200); }
+  .section-divider h2 { font-size: 13px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--text-muted); padding-bottom: 10px; border-bottom: 1px solid var(--border-color); }
 
   @media(max-width:768px) {
     .hero { padding: 48px 24px; }
@@ -148,7 +155,7 @@
     </div>
   </nav>
   <div class="sidebar-footer">
-    Threat Modeling Guide · v1.0<br>
+    Threat Modeling Guide · v2.0<br>
     For teaching & self-study
   </div>
 </aside>
@@ -159,6 +166,8 @@
     <button class="hamburger" id="hamburger">☰</button>
     <span class="top-bar-title">🛡️ Threat Modeling — Teaching Guide</span>
     <div class="top-bar-actions">
+      <button class="search-trigger-btn" id="search-trigger"><span>🔍 Search...</span> <kbd>Ctrl K</kbd></button>
+      <button class="btn-icon" id="theme-toggle" title="Toggle Theme">🌙</button>
       <span class="live-badge" id="live-badge" style="display:none"><span class="live-dot"></span> LIVE</span>
       <a class="btn btn-ghost" href="modules/01-introduction.html">Start Course →</a>
       <button class="btn btn-present" id="btn-present">🎬 Present</button>
@@ -214,8 +223,8 @@
     <div class="callout info" style="margin-top:28px">
       <div class="callout-icon">💡</div>
       <div class="callout-body">
-        <div class="callout-title">How to Use This Guide</div>
-        <div class="callout-text">Follow the modules in order for self-study. For live teaching, use the 🎬 <strong>Present</strong> button on any page to enter fullscreen presentation mode — navigate slides with arrow keys or the on-screen controls.</div>
+        <div class="callout-title">Practitioner Resources</div>
+        <div class="callout-text">Looking for templates for your own software projects? Access our standalone <a href="THREAT_MODEL_TEMPLATE.md"><strong>Threat Model Template</strong></a> or printable <a href="STRIDE_CHEAT_SHEET.md"><strong>STRIDE Cheat Sheet</strong></a> directly in the repository!</div>
       </div>
     </div>
   </div>

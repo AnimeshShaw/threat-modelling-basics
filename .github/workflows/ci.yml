@@ -1,0 +1,36 @@
+name: CI Validation
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    name: Validate HTML & Assets Structure
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check HTML File Existence
+        run: |
+          echo "Verifying index.html and all 10 module files..."
+          test -f index.html || (echo "Missing index.html" && exit 1)
+          for i in $(seq -w 1 10); do
+            ls modules/${i}-*.html > /dev/null || (echo "Missing module ${i}" && exit 1)
+          done
+          echo "All 10 modules verified successfully!"
+
+      - name: Check CSS and JS Syntax
+        run: |
+          test -f css/styles.css || exit 1
+          test -f js/app.js || exit 1
+          node -c js/app.js
+          echo "JavaScript syntax check passed!"
